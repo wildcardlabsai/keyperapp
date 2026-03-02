@@ -2,56 +2,96 @@ import { useState, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { Shield, Users, BarChart3, ArrowLeft, Crown, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 
 type Tab = "users" | "metrics";
 
-type MockUser = {
-  id: string;
+type UserRow = {
+  user_id: string;
   email: string;
-  signupDate: string;
-  plan: "Free" | "Pro Demo";
-  keyCount: number;
+  plan: string;
+  created_at: string;
+  key_count: number;
 };
-
-const MOCK_USERS: MockUser[] = [
-  { id: "1", email: "alice@example.com", signupDate: "05/01/2026", plan: "Pro Demo", keyCount: 23 },
-  { id: "2", email: "bob@dev.io", signupDate: "12/01/2026", plan: "Free", keyCount: 8 },
-  { id: "3", email: "carol@startup.com", signupDate: "20/01/2026", plan: "Free", keyCount: 3 },
-  { id: "4", email: "dave@agency.co", signupDate: "01/02/2026", plan: "Pro Demo", keyCount: 47 },
-  { id: "5", email: "eve@tech.dev", signupDate: "25/02/2026", plan: "Free", keyCount: 1 },
-];
 
 const Admin = () => {
   const [tab, setTab] = useState<Tab>("users");
-  const [users, setUsers] = useState(MOCK_USERS);
+  const [users, setUsers] = useState<UserRow[]>([]);
   const [announcement, setAnnouncement] = useState("");
+  const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
   const { toast } = useToast();
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data }) => {
-      if (!data.session) navigate("/login");
-    });
-  }, [navigate]);
+    const load = async () => {
+      const { data: profiles } = await supabase.from("profiles").select("*");
+      if (!profiles) { setLoading(false); return; }
 
-  const togglePlan = (id: string) => {
-    setUsers((prev) => prev.map((u) => u.id === id ? { ...u, plan: u.plan === "Free" ? "Pro Demo" : "Free" } : u));
+      const rows: UserRow[] = [];
+      for (const p of profiles) {
+        const { count } = await supabase
+          .from("api_keys")
+          .select("*", { count: "exact", head: true })
+          .eq("user_id", p.user_id);
+        rows.push({
+          user_id: p.user_id,
+          email: p.email || "",
+          plan: p.plan,
+          created_at: new Date(p.created_at).toLocaleDateString("en-GB"),
+          key_count: count || 0,
+        });
+      }
+      setUsers(rows);
+
+      // Load active announcement
+      const { data: ann } = await supabase
+        .from("announcements")
+        .select("message")
+        .eq("active", true)
+        .limit(1)
+        .maybeSingle();
+      if (ann) setAnnouncement(ann.message);
+
+      setLoading(false);
+    };
+    load();
+  }, []);
+
+  const togglePlan = async (userId: string, currentPlan: string) => {
+    const newPlan = currentPlan === "free" ? "pro" : "free";
+    await supabase.from("profiles").update({ plan: newPlan }).eq("user_id", userId);
+    setUsers((prev) => prev.map((u) => u.user_id === userId ? { ...u, plan: newPlan } : u));
     toast({ title: "Plan updated" });
   };
 
-  const totalKeys = users.reduce((a, u) => a + u.keyCount, 0);
+  const saveAnnouncement = async () => {
+    // Deactivate old
+    await supabase.from("announcements").update({ active: false }).eq("active", true);
+    if (announcement.trim()) {
+      await supabase.from("announcements").insert({ message: announcement.trim(), active: true });
+    }
+    toast({ title: "Banner updated" });
+  };
+
+  const totalKeys = users.reduce((a, u) => a + u.key_count, 0);
   const newUsers7d = users.filter((u) => {
-    const parts = u.signupDate.split("/");
+    const parts = u.created_at.split("/");
     const d = new Date(Number(parts[2]), Number(parts[1]) - 1, Number(parts[0]));
-    const now = new Date();
-    return (now.getTime() - d.getTime()) / (1000 * 60 * 60 * 24) <= 7;
+    return (Date.now() - d.getTime()) / (1000 * 60 * 60 * 24) <= 7;
   }).length;
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="h-8 w-8 rounded-full border-2 border-primary border-t-transparent animate-spin" />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen flex">
-      {/* Sidebar */}
       <aside className="hidden md:flex w-64 flex-col border-r border-border/50 bg-sidebar p-4">
         <div className="flex items-center gap-2 mb-2 px-2">
           <div className="h-8 w-8 rounded-lg bg-gradient-primary flex items-center justify-center">
@@ -82,19 +122,19 @@ const Admin = () => {
                 <span>Email</span><span>Signup</span><span>Plan</span><span>Keys</span><span className="text-right">Actions</span>
               </div>
               {users.map((u) => (
-                <div key={u.id} className="grid sm:grid-cols-[1fr_100px_80px_80px_100px] gap-4 px-5 py-4 border-b border-border/30 last:border-0 items-center hover:bg-muted/20 transition-colors">
+                <div key={u.user_id} className="grid sm:grid-cols-[1fr_100px_80px_80px_100px] gap-4 px-5 py-4 border-b border-border/30 last:border-0 items-center hover:bg-muted/20 transition-colors">
                   <div className="flex items-center gap-2">
                     <div className="h-8 w-8 rounded-full bg-secondary flex items-center justify-center shrink-0">
                       <User className="h-4 w-4 text-muted-foreground" />
                     </div>
                     <span className="text-sm font-medium truncate">{u.email}</span>
                   </div>
-                  <span className="text-xs text-muted-foreground hidden sm:block">{u.signupDate}</span>
-                  <span className={`text-xs font-medium hidden sm:block ${u.plan === "Pro Demo" ? "text-accent" : "text-muted-foreground"}`}>{u.plan}</span>
-                  <span className="text-xs text-muted-foreground hidden sm:block">{u.keyCount}</span>
+                  <span className="text-xs text-muted-foreground hidden sm:block">{u.created_at}</span>
+                  <span className={`text-xs font-medium hidden sm:block ${u.plan === "pro" ? "text-accent" : "text-muted-foreground"}`}>{u.plan === "pro" ? "Pro" : "Free"}</span>
+                  <span className="text-xs text-muted-foreground hidden sm:block">{u.key_count}</span>
                   <div className="flex justify-end">
-                    <Button size="sm" variant="outline" onClick={() => togglePlan(u.id)} className="text-xs h-7">
-                      {u.plan === "Free" ? <><Crown className="mr-1 h-3 w-3" />Enable Pro</> : "Downgrade"}
+                    <Button size="sm" variant="outline" onClick={() => togglePlan(u.user_id, u.plan)} className="text-xs h-7">
+                      {u.plan === "free" ? <><Crown className="mr-1 h-3 w-3" />Enable Pro</> : "Downgrade"}
                     </Button>
                   </div>
                 </div>
@@ -122,8 +162,8 @@ const Admin = () => {
               <h3 className="font-semibold mb-4">Announcement banner</h3>
               <p className="text-sm text-muted-foreground mb-3">Set a message to display to all users at the top of their dashboard.</p>
               <div className="flex gap-3">
-                <input value={announcement} onChange={(e) => setAnnouncement(e.target.value)} placeholder="e.g. Keyper Pro is now available!" className="flex-1 h-9 rounded-md border border-input bg-muted/50 px-3 text-sm" maxLength={200} />
-                <Button size="sm" onClick={() => toast({ title: "Banner updated" })} className="bg-gradient-primary border-0">Save</Button>
+                <Input value={announcement} onChange={(e) => setAnnouncement(e.target.value)} placeholder="e.g. Keyper Pro is now available!" className="flex-1 bg-muted/50" maxLength={200} />
+                <Button size="sm" onClick={saveAnnouncement} className="bg-gradient-primary border-0">Save</Button>
               </div>
             </div>
           </div>
