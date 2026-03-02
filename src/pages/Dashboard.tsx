@@ -12,6 +12,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import AddKeyDialog, { type ApiKeyData } from "@/components/dashboard/AddKeyDialog";
 import { supabase } from "@/integrations/supabase/client";
+import TwoFactorSetup from "@/components/dashboard/TwoFactorSetup";
 import { useToast } from "@/hooks/use-toast";
 import { deriveKey, encrypt, decrypt } from "@/lib/crypto";
 
@@ -593,7 +594,12 @@ const Dashboard = () => {
               </div>
               <div className="rounded-xl border border-border/50 bg-card/40 p-6">
                 <h3 className="font-semibold mb-4">Security</h3>
-                <Button variant="outline" size="sm" onClick={handleChangePassword}>Change password</Button>
+                <div className="space-y-4">
+                  <Button variant="outline" size="sm" onClick={handleChangePassword}>Change password</Button>
+                  <div className="border-t border-border/40 pt-4">
+                    <TwoFactorSetup />
+                  </div>
+                </div>
               </div>
               <div className="rounded-xl border border-border/50 bg-card/40 p-6">
                 <h3 className="font-semibold mb-4">Vault auto-lock</h3>

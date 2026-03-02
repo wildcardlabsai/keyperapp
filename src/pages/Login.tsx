@@ -27,10 +27,17 @@ const Login = () => {
     e.preventDefault();
     if (!email || !password) return;
     setLoading(true);
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
+    const { data, error } = await supabase.auth.signInWithPassword({ email, password });
     setLoading(false);
     if (error) {
       toast({ variant: "destructive", title: "Login failed", description: error.message });
+      return;
+    }
+    // Check if user has MFA enrolled — redirect to verify page
+    const { data: factors } = await supabase.auth.mfa.listFactors();
+    const hasVerifiedTotp = factors?.totp?.some((f: any) => f.status === "verified");
+    if (hasVerifiedTotp) {
+      navigate("/verify-2fa");
     } else {
       navigate("/dashboard");
     }
