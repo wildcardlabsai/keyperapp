@@ -18,9 +18,11 @@ const Footer = () => (
         <Link to="/contact" className="hover:text-foreground transition-colors">Support</Link>
         <Link to="/privacy" className="hover:text-foreground transition-colors">Privacy</Link>
         <Link to="/terms" className="hover:text-foreground transition-colors">Terms</Link>
+        <Link to="/admin" className="hover:text-foreground transition-colors">Admin</Link>
       </div>
-      <div className="text-center text-sm text-muted-foreground">
-        © {new Date().getFullYear()} Keyper. All rights reserved.
+      <div className="text-center text-sm text-muted-foreground space-y-1">
+        <p>© {new Date().getFullYear()} Keyper. All rights reserved.</p>
+        <p>Developed by Wildcard Labs · <a href="https://twitter.com/CymruMatt" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">@CymruMatt</a></p>
       </div>
     </div>
   </footer>
