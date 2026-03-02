@@ -9,7 +9,7 @@ const navLinks = [
   { to: "/security", label: "Security" },
   { to: "/pricing", label: "Pricing" },
   { to: "/faq", label: "FAQ" },
-  { to: "/contact", label: "Support" },
+  { to: "/support", label: "Support" },
 ];
 
 const Navbar = () => {

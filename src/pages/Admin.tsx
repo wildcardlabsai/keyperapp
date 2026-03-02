@@ -1,12 +1,15 @@
 import { useState, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
-import { Shield, Users, BarChart3, ArrowLeft, Crown, User } from "lucide-react";
+import { Shield, Users, BarChart3, ArrowLeft, Crown, User, MessageSquare, KeyRound } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import AdminSupport from "@/components/admin/AdminSupport";
 
-type Tab = "users" | "metrics";
+type Tab = "users" | "metrics" | "support";
 
 type UserRow = {
   user_id: string;
@@ -21,6 +24,9 @@ const Admin = () => {
   const [users, setUsers] = useState<UserRow[]>([]);
   const [announcement, setAnnouncement] = useState("");
   const [loading, setLoading] = useState(true);
+  const [resetTarget, setResetTarget] = useState<UserRow | null>(null);
+  const [newPassword, setNewPassword] = useState("");
+  const [resetting, setResetting] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -45,7 +51,6 @@ const Admin = () => {
       }
       setUsers(rows);
 
-      // Load active announcement
       const { data: ann } = await supabase
         .from("announcements")
         .select("message")
@@ -67,12 +72,41 @@ const Admin = () => {
   };
 
   const saveAnnouncement = async () => {
-    // Deactivate old
     await supabase.from("announcements").update({ active: false }).eq("active", true);
     if (announcement.trim()) {
       await supabase.from("announcements").insert({ message: announcement.trim(), active: true });
     }
     toast({ title: "Banner updated" });
+  };
+
+  const handleResetPassword = async () => {
+    if (!resetTarget || !newPassword || newPassword.length < 6) {
+      toast({ variant: "destructive", title: "Password must be at least 6 characters" });
+      return;
+    }
+    setResetting(true);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      const res = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/admin-reset-password`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${session?.access_token}`,
+          },
+          body: JSON.stringify({ user_id: resetTarget.user_id, new_password: newPassword }),
+        }
+      );
+      const result = await res.json();
+      if (result.error) throw new Error(result.error);
+      toast({ title: "Password reset", description: `Password updated for ${resetTarget.email}` });
+      setResetTarget(null);
+      setNewPassword("");
+    } catch (err: any) {
+      toast({ variant: "destructive", title: "Failed", description: err.message });
+    }
+    setResetting(false);
   };
 
   const totalKeys = users.reduce((a, u) => a + u.key_count, 0);
@@ -104,6 +138,9 @@ const Admin = () => {
           <button onClick={() => setTab("users")} className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${tab === "users" ? "bg-primary/10 text-primary" : "text-muted-foreground hover:text-foreground hover:bg-muted/50"}`}>
             <Users className="h-4 w-4" />Users
           </button>
+          <button onClick={() => setTab("support")} className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${tab === "support" ? "bg-primary/10 text-primary" : "text-muted-foreground hover:text-foreground hover:bg-muted/50"}`}>
+            <MessageSquare className="h-4 w-4" />Support
+          </button>
           <button onClick={() => setTab("metrics")} className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${tab === "metrics" ? "bg-primary/10 text-primary" : "text-muted-foreground hover:text-foreground hover:bg-muted/50"}`}>
             <BarChart3 className="h-4 w-4" />Metrics
           </button>
@@ -118,11 +155,11 @@ const Admin = () => {
           <div>
             <h1 className="text-2xl font-bold mb-6">Users</h1>
             <div className="rounded-xl border border-border/50 bg-card/40 overflow-hidden">
-              <div className="hidden sm:grid grid-cols-[1fr_100px_80px_80px_100px] gap-4 px-5 py-3 text-xs text-muted-foreground font-medium border-b border-border/40">
+              <div className="hidden sm:grid grid-cols-[1fr_100px_80px_80px_160px] gap-4 px-5 py-3 text-xs text-muted-foreground font-medium border-b border-border/40">
                 <span>Email</span><span>Signup</span><span>Plan</span><span>Keys</span><span className="text-right">Actions</span>
               </div>
               {users.map((u) => (
-                <div key={u.user_id} className="grid sm:grid-cols-[1fr_100px_80px_80px_100px] gap-4 px-5 py-4 border-b border-border/30 last:border-0 items-center hover:bg-muted/20 transition-colors">
+                <div key={u.user_id} className="grid sm:grid-cols-[1fr_100px_80px_80px_160px] gap-4 px-5 py-4 border-b border-border/30 last:border-0 items-center hover:bg-muted/20 transition-colors">
                   <div className="flex items-center gap-2">
                     <div className="h-8 w-8 rounded-full bg-secondary flex items-center justify-center shrink-0">
                       <User className="h-4 w-4 text-muted-foreground" />
@@ -132,9 +169,12 @@ const Admin = () => {
                   <span className="text-xs text-muted-foreground hidden sm:block">{u.created_at}</span>
                   <span className={`text-xs font-medium hidden sm:block ${u.plan === "pro" ? "text-accent" : "text-muted-foreground"}`}>{u.plan === "pro" ? "Pro" : "Free"}</span>
                   <span className="text-xs text-muted-foreground hidden sm:block">{u.key_count}</span>
-                  <div className="flex justify-end">
+                  <div className="flex justify-end gap-1.5">
                     <Button size="sm" variant="outline" onClick={() => togglePlan(u.user_id, u.plan)} className="text-xs h-7">
-                      {u.plan === "free" ? <><Crown className="mr-1 h-3 w-3" />Enable Pro</> : "Downgrade"}
+                      {u.plan === "free" ? <><Crown className="mr-1 h-3 w-3" />Pro</> : "Free"}
+                    </Button>
+                    <Button size="sm" variant="outline" onClick={() => { setResetTarget(u); setNewPassword(""); }} className="text-xs h-7">
+                      <KeyRound className="mr-1 h-3 w-3" />Reset PW
                     </Button>
                   </div>
                 </div>
@@ -142,6 +182,8 @@ const Admin = () => {
             </div>
           </div>
         )}
+
+        {tab === "support" && <AdminSupport />}
 
         {tab === "metrics" && (
           <div>
@@ -169,6 +211,26 @@ const Admin = () => {
           </div>
         )}
       </main>
+
+      {/* Password reset dialog */}
+      <Dialog open={!!resetTarget} onOpenChange={(o) => !o && setResetTarget(null)}>
+        <DialogContent className="bg-card border-border/60 max-w-sm">
+          <DialogHeader>
+            <DialogTitle>Reset password</DialogTitle>
+          </DialogHeader>
+          <p className="text-sm text-muted-foreground">Set a new password for <strong>{resetTarget?.email}</strong></p>
+          <div>
+            <Label>New password</Label>
+            <Input type="password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} placeholder="Min 6 characters" className="bg-muted/50 mt-1" />
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setResetTarget(null)}>Cancel</Button>
+            <Button onClick={handleResetPassword} disabled={resetting} className="bg-gradient-primary border-0">
+              {resetting ? "Resetting..." : "Reset password"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

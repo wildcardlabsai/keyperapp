@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import {
   Shield, Key, Settings, CreditCard, Activity, LogOut, Lock, Plus, Eye, EyeOff,
   Copy, Trash2, Search, Edit, Download, Upload, Clock, Check, LayoutDashboard,
-  AlertTriangle, Unlock
+  AlertTriangle, Unlock, MessageSquare
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -13,10 +13,11 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import AddKeyDialog, { type ApiKeyData } from "@/components/dashboard/AddKeyDialog";
 import { supabase } from "@/integrations/supabase/client";
 import TwoFactorSetup from "@/components/dashboard/TwoFactorSetup";
+import SupportTab from "@/components/dashboard/SupportTab";
 import { useToast } from "@/hooks/use-toast";
 import { deriveKey, encrypt, decrypt } from "@/lib/crypto";
 
-type Tab = "overview" | "keys" | "settings" | "billing" | "security";
+type Tab = "overview" | "keys" | "settings" | "billing" | "security" | "support";
 type ActivityEntry = { action: string; time: string };
 
 const formatDate = (d: string) => {
@@ -32,6 +33,7 @@ const formatDateTime = (d: string) => {
 const sidebarItems: { id: Tab; label: string; icon: typeof Key }[] = [
   { id: "overview", label: "Overview", icon: LayoutDashboard },
   { id: "keys", label: "API Keys", icon: Key },
+  { id: "support", label: "Support", icon: MessageSquare },
   { id: "settings", label: "Settings", icon: Settings },
   { id: "billing", label: "Billing", icon: CreditCard },
   { id: "security", label: "Security", icon: Activity },
@@ -682,6 +684,8 @@ const Dashboard = () => {
             </div>
           </div>
         )}
+        {/* Support */}
+        {tab === "support" && <SupportTab userEmail={userEmail} userId={userId} />}
       </main>
 
       {/* Dialogs */}
