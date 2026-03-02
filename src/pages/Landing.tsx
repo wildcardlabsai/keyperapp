@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
 import { Shield, Lock, EyeOff, ArrowRight, Key, Code, Tag, Download, Users, Database, ShieldCheck, Globe } from "lucide-react";
+import Testimonials from "@/components/landing/Testimonials";
 import { Button } from "@/components/ui/button";
 import Navbar from "@/components/landing/Navbar";
 import Footer from "@/components/landing/Footer";
@@ -220,6 +221,9 @@ const Landing = () => {
           </div>
         </div>
       </section>
+
+      {/* Testimonials */}
+      <Testimonials />
 
       {/* CTA */}
       <section className="py-24 px-4 relative overflow-hidden">
