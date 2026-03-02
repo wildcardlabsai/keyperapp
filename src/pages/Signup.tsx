@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { Link } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { Link, useNavigate } from "react-router-dom";
 import { Eye, EyeOff, Check } from "lucide-react";
 import keyperLogo from "@/assets/keyper-logo.png";
 import { Button } from "@/components/ui/button";
@@ -12,10 +12,19 @@ const Signup = () => {
   const [email, setEmail] = useState("");
   const [confirmEmail, setConfirmEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [showPw, setShowPw] = useState(false);
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
+  const navigate = useNavigate();
   const { toast } = useToast();
+
+  useEffect(() => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_, session) => {
+      if (session) navigate("/dashboard", { replace: true });
+    });
+    return () => subscription.unsubscribe();
+  }, [navigate]);
 
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -26,6 +35,10 @@ const Signup = () => {
     }
     if (password.length < 8) {
       toast({ variant: "destructive", title: "Password too short", description: "Password must be at least 8 characters." });
+      return;
+    }
+    if (password !== confirmPassword) {
+      toast({ variant: "destructive", title: "Passwords don't match", description: "Please make sure both password fields match." });
       return;
     }
     setLoading(true);
@@ -84,6 +97,12 @@ const Signup = () => {
               <button type="button" className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground" onClick={() => setShowPw(!showPw)}>
                 {showPw ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
               </button>
+            </div>
+          </div>
+          <div>
+            <label className="text-sm font-medium mb-1.5 block">Confirm Password</label>
+            <div className="relative">
+              <Input type={showPw ? "text" : "password"} value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} placeholder="Re-enter password" required minLength={8} className="bg-card/60 pr-10" />
             </div>
           </div>
           <Button type="submit" disabled={loading} className="w-full bg-gradient-primary border-0">
