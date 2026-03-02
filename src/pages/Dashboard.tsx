@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   Shield, Key, Settings, CreditCard, Activity, LogOut, Lock, Plus, Eye, EyeOff,
@@ -7,27 +7,26 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import AddKeyDialog, { type ApiKeyData } from "@/components/dashboard/AddKeyDialog";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { deriveKey, encrypt, decrypt } from "@/lib/crypto";
 
 type Tab = "overview" | "keys" | "settings" | "billing" | "security";
 type ActivityEntry = { action: string; time: string };
 
-const now = () => {
-  const d = new Date();
-  return `${String(d.getDate()).padStart(2, "0")}/${String(d.getMonth() + 1).padStart(2, "0")}/${d.getFullYear()} ${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
+const formatDate = (d: string) => {
+  const date = new Date(d);
+  return `${String(date.getDate()).padStart(2, "0")}/${String(date.getMonth() + 1).padStart(2, "0")}/${date.getFullYear()}`;
 };
 
-const INITIAL_KEYS: ApiKeyData[] = [
-  { id: "1", name: "OpenAI Production", service: "OpenAI", environment: "Production", key: "sk-proj-abc123def456ghi789", createdAt: "15/01/2026", tags: "backend, ai", notes: "" },
-  { id: "2", name: "Stripe Secret", service: "Stripe", environment: "Production", key: "sk_live_4eC39HqLyjWDarjtT1zdp7dc", createdAt: "20/01/2026", tags: "payments", notes: "Main payment key" },
-  { id: "3", name: "AWS Dev Access", service: "AWS", environment: "Dev", key: "AKIAIOSFODNN7EXAMPLE", createdAt: "01/02/2026", tags: "", notes: "" },
-];
+const formatDateTime = (d: string) => {
+  const date = new Date(d);
+  return `${formatDate(d)} ${String(date.getHours()).padStart(2, "0")}:${String(date.getMinutes()).padStart(2, "0")}`;
+};
 
 const sidebarItems: { id: Tab; label: string; icon: typeof Key }[] = [
   { id: "overview", label: "Overview", icon: LayoutDashboard },
@@ -40,34 +39,99 @@ const sidebarItems: { id: Tab; label: string; icon: typeof Key }[] = [
 const Dashboard = () => {
   const [tab, setTab] = useState<Tab>("overview");
   const [locked, setLocked] = useState(false);
-  const [passphrase, setPassphrase] = useState("");
-  const [hasVault, setHasVault] = useState(() => localStorage.getItem("keyper_vault") === "true");
+  const [hasVault, setHasVault] = useState<boolean | null>(null);
   const [vaultInput, setVaultInput] = useState("");
-  const [keys, setKeys] = useState<ApiKeyData[]>(INITIAL_KEYS);
-  const [revealed, setRevealed] = useState<Set<string>>(new Set());
+  const [keys, setKeys] = useState<ApiKeyData[]>([]);
+  const [revealed, setRevealed] = useState<Map<string, string>>(new Map());
   const [search, setSearch] = useState("");
   const [filterService, setFilterService] = useState("all");
   const [showAdd, setShowAdd] = useState(false);
   const [editKey, setEditKey] = useState<ApiKeyData | null>(null);
   const [deleteId, setDeleteId] = useState<string | null>(null);
-  const [plan, setPlan] = useState<"free" | "pro">(() => (localStorage.getItem("keyper_plan") as "free" | "pro") || "free");
+  const [plan, setPlan] = useState("free");
   const [autoLockMin, setAutoLockMin] = useState(10);
   const [userEmail, setUserEmail] = useState("");
+  const [userId, setUserId] = useState("");
   const [showUpgrade, setShowUpgrade] = useState(false);
-  const [activityLog, setActivityLog] = useState<ActivityEntry[]>([{ action: "Vault created", time: "15/01/2026 09:00" }]);
+  const [activityLog, setActivityLog] = useState<ActivityEntry[]>([]);
+  const cryptoKeyRef = useRef<CryptoKey | null>(null);
   const navigate = useNavigate();
   const { toast } = useToast();
 
+  // Load user session & profile
   useEffect(() => {
-    supabase.auth.getSession().then(({ data }) => {
-      if (!data.session) navigate("/login");
-      else setUserEmail(data.session.user.email ?? "");
-    });
+    const init = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) { navigate("/login"); return; }
+      setUserEmail(session.user.email ?? "");
+      setUserId(session.user.id);
+
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("*")
+        .eq("user_id", session.user.id)
+        .single();
+
+      if (profile) {
+        setHasVault(profile.vault_created);
+        setPlan(profile.plan);
+        setAutoLockMin(profile.auto_lock_minutes);
+      } else {
+        setHasVault(false);
+      }
+    };
+    init();
+
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_, session) => {
       if (!session) navigate("/login");
     });
     return () => subscription.unsubscribe();
   }, [navigate]);
+
+  // Load keys (encrypted) from DB after vault is unlocked
+  const loadKeys = useCallback(async () => {
+    const { data } = await supabase
+      .from("api_keys")
+      .select("*")
+      .order("created_at", { ascending: false });
+
+    if (data) {
+      setKeys(data.map((k: any) => ({
+        id: k.id,
+        name: k.name,
+        service: k.service,
+        environment: k.environment,
+        key: "••••••••••••••••••••", // placeholder, decrypt on reveal
+        createdAt: formatDate(k.created_at),
+        tags: k.tags || "",
+        notes: "", // decrypt on demand
+        _encrypted_key: k.encrypted_key,
+        _iv: k.iv,
+        _notes_encrypted: k.notes_encrypted,
+        _notes_iv: k.notes_iv,
+      })));
+    }
+  }, []);
+
+  // Load activity log
+  const loadActivity = useCallback(async () => {
+    const { data } = await supabase
+      .from("activity_log")
+      .select("action, created_at")
+      .order("created_at", { ascending: false })
+      .limit(30);
+
+    if (data) {
+      setActivityLog(data.map((e: any) => ({ action: e.action, time: formatDateTime(e.created_at) })));
+    }
+  }, []);
+
+  useEffect(() => {
+    if (hasVault && !locked && cryptoKeyRef.current) {
+      loadKeys();
+      loadActivity();
+    }
+  }, [hasVault, locked, loadKeys, loadActivity]);
 
   // Auto-lock timer
   useEffect(() => {
@@ -77,7 +141,8 @@ const Dashboard = () => {
       clearTimeout(timeout);
       timeout = setTimeout(() => {
         setLocked(true);
-        setRevealed(new Set());
+        setRevealed(new Map());
+        cryptoKeyRef.current = null;
       }, autoLockMin * 60 * 1000);
     };
     reset();
@@ -90,83 +155,228 @@ const Dashboard = () => {
     };
   }, [locked, hasVault, autoLockMin]);
 
-  const addLog = useCallback((action: string) => {
-    setActivityLog((prev) => [{ action, time: now() }, ...prev]);
-  }, []);
+  const addLog = useCallback(async (action: string) => {
+    if (!userId) return;
+    await supabase.from("activity_log").insert({ user_id: userId, action });
+    setActivityLog((prev) => [{ action, time: formatDateTime(new Date().toISOString()) }, ...prev]);
+  }, [userId]);
 
-  const handleReveal = (id: string) => {
-    setRevealed((p) => {
-      const n = new Set(p);
-      if (n.has(id)) { n.delete(id); } else { n.add(id); setTimeout(() => setRevealed((pp) => { const nn = new Set(pp); nn.delete(id); return nn; }), 5000); }
-      return n;
-    });
+  const handleReveal = async (id: string) => {
+    if (revealed.has(id)) {
+      setRevealed((p) => { const n = new Map(p); n.delete(id); return n; });
+      return;
+    }
+    const key = cryptoKeyRef.current;
+    if (!key) return;
+    const k = keys.find((k) => k.id === id) as any;
+    if (!k?._encrypted_key || !k?._iv) return;
+    try {
+      const plaintext = await decrypt(k._encrypted_key, k._iv, key);
+      setRevealed((p) => new Map(p).set(id, plaintext));
+      setTimeout(() => setRevealed((p) => { const n = new Map(p); n.delete(id); return n; }), 5000);
+    } catch {
+      toast({ variant: "destructive", title: "Decryption failed", description: "Wrong passphrase or corrupted data." });
+    }
   };
 
-  const handleCopy = (key: string) => {
-    navigator.clipboard.writeText(key);
-    toast({ title: "Copied", description: "API key copied to clipboard." });
+  const handleCopy = async (id: string) => {
+    const key = cryptoKeyRef.current;
+    if (!key) return;
+    const k = keys.find((k) => k.id === id) as any;
+    if (!k?._encrypted_key || !k?._iv) return;
+    try {
+      const plaintext = revealed.has(id) ? revealed.get(id)! : await decrypt(k._encrypted_key, k._iv, key);
+      navigator.clipboard.writeText(plaintext);
+      toast({ title: "Copied", description: "API key copied to clipboard." });
+      addLog(`Key copied: ${k.name}`);
+    } catch {
+      toast({ variant: "destructive", title: "Failed to copy" });
+    }
   };
 
-  const handleAddKey = (data: Omit<ApiKeyData, "id" | "createdAt">) => {
+  const handleAddKey = async (data: Omit<ApiKeyData, "id" | "createdAt">) => {
+    const key = cryptoKeyRef.current;
+    if (!key || !userId) return;
+
     if (plan === "free" && keys.length >= 10 && !editKey) {
       setShowAdd(false);
       setShowUpgrade(true);
       return;
     }
-    if (editKey) {
-      setKeys((prev) => prev.map((k) => k.id === editKey.id ? { ...k, ...data } : k));
-      addLog(`Key updated: ${data.name}`);
-      toast({ title: "Key updated" });
-    } else {
-      const newKey: ApiKeyData = { ...data, id: crypto.randomUUID(), createdAt: now().split(" ")[0] };
-      setKeys((prev) => [...prev, newKey]);
-      addLog(`Key added: ${data.name}`);
-      toast({ title: "Key added", description: `${data.name} has been saved to your vault.` });
+
+    try {
+      const encrypted = await encrypt(data.key, key);
+      let notesEnc = { ciphertext: "", iv: "" };
+      if (data.notes) {
+        notesEnc = await encrypt(data.notes, key);
+      }
+
+      if (editKey) {
+        await supabase.from("api_keys").update({
+          name: data.name,
+          service: data.service,
+          environment: data.environment,
+          encrypted_key: encrypted.ciphertext,
+          iv: encrypted.iv,
+          tags: data.tags,
+          notes_encrypted: notesEnc.ciphertext,
+          notes_iv: notesEnc.iv,
+        }).eq("id", editKey.id);
+        addLog(`Key updated: ${data.name}`);
+        toast({ title: "Key updated" });
+      } else {
+        await supabase.from("api_keys").insert({
+          user_id: userId,
+          name: data.name,
+          service: data.service,
+          environment: data.environment,
+          encrypted_key: encrypted.ciphertext,
+          iv: encrypted.iv,
+          tags: data.tags,
+          notes_encrypted: notesEnc.ciphertext,
+          notes_iv: notesEnc.iv,
+        });
+        addLog(`Key added: ${data.name}`);
+        toast({ title: "Key added", description: `${data.name} has been saved to your vault.` });
+      }
+
+      setShowAdd(false);
+      setEditKey(null);
+      loadKeys();
+    } catch (err) {
+      toast({ variant: "destructive", title: "Encryption error", description: "Failed to encrypt key." });
     }
-    setShowAdd(false);
-    setEditKey(null);
   };
 
-  const handleDelete = () => {
+  const handleDelete = async () => {
     if (!deleteId) return;
     const k = keys.find((k) => k.id === deleteId);
-    setKeys((prev) => prev.filter((k) => k.id !== deleteId));
+    await supabase.from("api_keys").delete().eq("id", deleteId);
     addLog(`Key deleted: ${k?.name}`);
     toast({ title: "Key deleted" });
     setDeleteId(null);
+    loadKeys();
   };
 
-  const createVault = () => {
-    if (vaultInput.length < 6) { toast({ variant: "destructive", title: "Passphrase too short", description: "Must be at least 6 characters." }); return; }
-    setPassphrase(vaultInput);
+  const createVault = async () => {
+    if (vaultInput.length < 6) {
+      toast({ variant: "destructive", title: "Passphrase too short", description: "Must be at least 6 characters." });
+      return;
+    }
+    const derived = await deriveKey(vaultInput, userId);
+    cryptoKeyRef.current = derived;
+    await supabase.from("profiles").update({ vault_created: true }).eq("user_id", userId);
     setHasVault(true);
-    localStorage.setItem("keyper_vault", "true");
     addLog("Vault created");
     toast({ title: "Vault created", description: "Your vault is ready. Remember your passphrase — it cannot be recovered." });
     setVaultInput("");
   };
 
-  const unlockVault = () => {
-    if (vaultInput === passphrase || passphrase === "") {
+  const unlockVault = async () => {
+    try {
+      const derived = await deriveKey(vaultInput, userId);
+      cryptoKeyRef.current = derived;
       setLocked(false);
       addLog("Vault unlocked");
       toast({ title: "Vault unlocked" });
       setVaultInput("");
-    } else {
-      toast({ variant: "destructive", title: "Wrong passphrase" });
+    } catch {
+      toast({ variant: "destructive", title: "Failed to derive key" });
     }
   };
 
   const handleLogout = async () => {
+    cryptoKeyRef.current = null;
     await supabase.auth.signOut();
     navigate("/login");
   };
 
-  const handleUpgrade = () => {
+  const handleExport = async () => {
+    const { data } = await supabase.from("api_keys").select("*");
+    if (!data || data.length === 0) {
+      toast({ title: "Nothing to export", description: "Your vault is empty." });
+      return;
+    }
+    const backup = {
+      version: 1,
+      exported_at: new Date().toISOString(),
+      keys: data.map((k: any) => ({
+        name: k.name,
+        service: k.service,
+        environment: k.environment,
+        encrypted_key: k.encrypted_key,
+        iv: k.iv,
+        tags: k.tags,
+        notes_encrypted: k.notes_encrypted,
+        notes_iv: k.notes_iv,
+      })),
+    };
+    const blob = new Blob([JSON.stringify(backup, null, 2)], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `keyper-backup-${new Date().toISOString().slice(0, 10)}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+    addLog("Encrypted backup exported");
+    toast({ title: "Backup exported" });
+  };
+
+  const handleImport = async () => {
+    const input = document.createElement("input");
+    input.type = "file";
+    input.accept = ".json";
+    input.onchange = async (e) => {
+      const file = (e.target as HTMLInputElement).files?.[0];
+      if (!file) return;
+      try {
+        const text = await file.text();
+        const backup = JSON.parse(text);
+        if (!backup.keys || !Array.isArray(backup.keys)) throw new Error("Invalid backup format");
+        for (const k of backup.keys) {
+          await supabase.from("api_keys").insert({
+            user_id: userId,
+            name: k.name,
+            service: k.service || "Other",
+            environment: k.environment || "Production",
+            encrypted_key: k.encrypted_key,
+            iv: k.iv,
+            tags: k.tags || "",
+            notes_encrypted: k.notes_encrypted || "",
+            notes_iv: k.notes_iv || "",
+          });
+        }
+        addLog(`Imported ${backup.keys.length} keys from backup`);
+        toast({ title: "Import complete", description: `${backup.keys.length} keys imported.` });
+        loadKeys();
+      } catch {
+        toast({ variant: "destructive", title: "Import failed", description: "Invalid backup file." });
+      }
+    };
+    input.click();
+  };
+
+  const handleUpdateAutoLock = async (val: number) => {
+    setAutoLockMin(val);
+    await supabase.from("profiles").update({ auto_lock_minutes: val }).eq("user_id", userId);
+  };
+
+  const handleUpgrade = async () => {
     setPlan("pro");
-    localStorage.setItem("keyper_plan", "pro");
+    await supabase.from("profiles").update({ plan: "pro" }).eq("user_id", userId);
     setShowUpgrade(false);
     toast({ title: "Upgraded to Pro (Demo)", description: "You now have unlimited key storage." });
+  };
+
+  const handleChangePassword = async () => {
+    const newPw = prompt("Enter new password (min 8 chars):");
+    if (!newPw || newPw.length < 8) {
+      toast({ variant: "destructive", title: "Password too short" });
+      return;
+    }
+    const { error } = await supabase.auth.updateUser({ password: newPw });
+    if (error) toast({ variant: "destructive", title: "Error", description: error.message });
+    else { toast({ title: "Password updated" }); addLog("Password changed"); }
   };
 
   const filteredKeys = keys.filter((k) => {
@@ -174,6 +384,15 @@ const Dashboard = () => {
     const matchService = filterService === "all" || k.service === filterService;
     return matchSearch && matchService;
   });
+
+  // Loading state
+  if (hasVault === null) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="h-8 w-8 rounded-full border-2 border-primary border-t-transparent animate-spin" />
+      </div>
+    );
+  }
 
   // Vault setup screen
   if (!hasVault) {
@@ -195,7 +414,7 @@ const Dashboard = () => {
   }
 
   // Lock screen
-  if (locked) {
+  if (locked || !cryptoKeyRef.current) {
     return (
       <div className="min-h-screen flex items-center justify-center px-4">
         <div className="w-full max-w-sm text-center">
@@ -230,7 +449,7 @@ const Dashboard = () => {
           ))}
         </nav>
         <div className="space-y-2 pt-4 border-t border-border/40">
-          <button onClick={() => { setLocked(true); setRevealed(new Set()); addLog("Vault locked manually"); }} className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-muted-foreground hover:text-foreground hover:bg-muted/50">
+          <button onClick={() => { setLocked(true); setRevealed(new Map()); cryptoKeyRef.current = null; addLog("Vault locked manually"); }} className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-muted-foreground hover:text-foreground hover:bg-muted/50">
             <Lock className="h-4 w-4" />Lock vault
           </button>
           <button onClick={handleLogout} className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-muted-foreground hover:text-foreground hover:bg-muted/50">
@@ -258,7 +477,7 @@ const Dashboard = () => {
             <div className="grid sm:grid-cols-3 gap-4 mb-8">
               {[
                 { label: "Total keys", value: keys.length, icon: Key },
-                { label: "Plan", value: plan === "pro" ? "Pro (Demo)" : "Free", icon: CreditCard },
+                { label: "Plan", value: plan === "pro" ? "Pro" : "Free", icon: CreditCard },
                 { label: "Vault status", value: "Unlocked", icon: Unlock },
               ].map((s) => (
                 <div key={s.label} className="rounded-xl border border-border/50 bg-card/40 p-5">
@@ -270,7 +489,6 @@ const Dashboard = () => {
                 </div>
               ))}
             </div>
-            {/* Onboarding checklist */}
             <div className="rounded-xl border border-border/50 bg-card/40 p-6">
               <h3 className="font-semibold mb-4">Getting started</h3>
               <div className="space-y-3">
@@ -333,7 +551,7 @@ const Dashboard = () => {
                     <div>
                       <p className="text-sm font-medium">{k.name}</p>
                       <p className="text-xs text-muted-foreground mt-0.5 font-mono">
-                        {revealed.has(k.id) ? k.key : "••••••••••••••••••••"}
+                        {revealed.has(k.id) ? revealed.get(k.id) : "••••••••••••••••••••"}
                       </p>
                       {k.tags && <div className="flex gap-1 mt-1.5">{k.tags.split(",").map((t) => <span key={t} className="text-[10px] px-1.5 py-0.5 rounded bg-secondary text-muted-foreground">{t.trim()}</span>)}</div>}
                     </div>
@@ -344,7 +562,7 @@ const Dashboard = () => {
                       <button onClick={() => handleReveal(k.id)} className="h-8 w-8 rounded-md bg-secondary/60 flex items-center justify-center hover:bg-secondary transition-colors" title={revealed.has(k.id) ? "Hide" : "Reveal"}>
                         {revealed.has(k.id) ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
                       </button>
-                      <button onClick={() => handleCopy(k.key)} className="h-8 w-8 rounded-md bg-secondary/60 flex items-center justify-center hover:bg-secondary transition-colors" title="Copy">
+                      <button onClick={() => handleCopy(k.id)} className="h-8 w-8 rounded-md bg-secondary/60 flex items-center justify-center hover:bg-secondary transition-colors" title="Copy">
                         <Copy className="h-3.5 w-3.5" />
                       </button>
                       <button onClick={() => { setEditKey(k); setShowAdd(true); }} className="h-8 w-8 rounded-md bg-secondary/60 flex items-center justify-center hover:bg-secondary transition-colors" title="Edit">
@@ -374,10 +592,14 @@ const Dashboard = () => {
                 </div>
               </div>
               <div className="rounded-xl border border-border/50 bg-card/40 p-6">
+                <h3 className="font-semibold mb-4">Security</h3>
+                <Button variant="outline" size="sm" onClick={handleChangePassword}>Change password</Button>
+              </div>
+              <div className="rounded-xl border border-border/50 bg-card/40 p-6">
                 <h3 className="font-semibold mb-4">Vault auto-lock</h3>
                 <div className="flex items-center gap-4">
                   <label className="text-sm text-muted-foreground">Lock after</label>
-                  <Select value={String(autoLockMin)} onValueChange={(v) => setAutoLockMin(Number(v))}>
+                  <Select value={String(autoLockMin)} onValueChange={(v) => handleUpdateAutoLock(Number(v))}>
                     <SelectTrigger className="w-32 bg-muted/50"><SelectValue /></SelectTrigger>
                     <SelectContent>
                       {[5, 10, 15, 30, 60].map((m) => <SelectItem key={m} value={String(m)}>{m} min</SelectItem>)}
@@ -402,7 +624,7 @@ const Dashboard = () => {
               <div className="flex items-center justify-between mb-4">
                 <div>
                   <p className="text-sm text-muted-foreground">Current plan</p>
-                  <p className="text-xl font-bold">{plan === "pro" ? "Pro (Demo)" : "Free"}</p>
+                  <p className="text-xl font-bold">{plan === "pro" ? "Pro" : "Free"}</p>
                 </div>
                 <div className="text-right">
                   <p className="text-sm text-muted-foreground">Price</p>
@@ -418,7 +640,7 @@ const Dashboard = () => {
               <Button onClick={handleUpgrade} className="bg-gradient-primary border-0">Upgrade to Pro (Demo)</Button>
             ) : (
               <div className="rounded-xl border border-accent/30 bg-accent/5 p-4">
-                <p className="text-sm"><strong>Pro (Demo)</strong> — You're using a demo of Pro. Billing will be enabled in a future update.</p>
+                <p className="text-sm"><strong>Pro</strong> — You're using Pro. Billing will be enabled in a future update.</p>
               </div>
             )}
           </div>
@@ -429,10 +651,10 @@ const Dashboard = () => {
           <div className="max-w-xl">
             <h1 className="text-2xl font-bold mb-6">Security</h1>
             <div className="flex gap-3 mb-6">
-              <Button variant="outline" size="sm" onClick={() => { addLog("Encrypted backup exported"); toast({ title: "Backup exported" }); }}>
+              <Button variant="outline" size="sm" onClick={handleExport}>
                 <Download className="mr-2 h-4 w-4" />Export backup
               </Button>
-              <Button variant="outline" size="sm" onClick={() => { addLog("Backup import attempted"); toast({ title: "Import", description: "Backup import is available in a future update." }); }}>
+              <Button variant="outline" size="sm" onClick={handleImport}>
                 <Upload className="mr-2 h-4 w-4" />Import backup
               </Button>
             </div>
@@ -472,7 +694,6 @@ const Dashboard = () => {
         </AlertDialogContent>
       </AlertDialog>
 
-      {/* Upgrade modal */}
       <Dialog open={showUpgrade} onOpenChange={setShowUpgrade}>
         <DialogContent className="bg-card border-border/60 max-w-sm">
           <DialogHeader>
