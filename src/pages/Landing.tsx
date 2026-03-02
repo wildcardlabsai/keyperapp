@@ -1,9 +1,59 @@
 import { Link } from "react-router-dom";
-import { Shield, Lock, EyeOff, ArrowRight, Key, Code, Tag, Download } from "lucide-react";
+import { Shield, Lock, EyeOff, ArrowRight, Key, Code, Tag, Download, Users, Database, ShieldCheck, Globe } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Navbar from "@/components/landing/Navbar";
 import Footer from "@/components/landing/Footer";
 import { useScrollAnimation } from "@/hooks/useScrollAnimation";
+import { useEffect, useRef, useState } from "react";
+
+const useCountUp = (target: number, duration = 2000, startOnView = true) => {
+  const [count, setCount] = useState(0);
+  const ref = useRef<HTMLDivElement>(null);
+  const started = useRef(false);
+
+  useEffect(() => {
+    if (!startOnView || !ref.current) return;
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting && !started.current) {
+          started.current = true;
+          const start = performance.now();
+          const step = (now: number) => {
+            const progress = Math.min((now - start) / duration, 1);
+            const eased = 1 - Math.pow(1 - progress, 3); // ease-out cubic
+            setCount(Math.floor(eased * target));
+            if (progress < 1) requestAnimationFrame(step);
+          };
+          requestAnimationFrame(step);
+        }
+      },
+      { threshold: 0.3 }
+    );
+    observer.observe(ref.current);
+    return () => observer.disconnect();
+  }, [target, duration, startOnView]);
+
+  return { count, ref };
+};
+
+const MetricCard = ({ target, suffix, label, icon: Icon, delay, displayFn }: {
+  target: number; suffix: string; label: string; icon: any; delay: number;
+  displayFn?: (count: number) => string;
+}) => {
+  const { count, ref } = useCountUp(target, 2000);
+  return (
+    <div ref={ref} className="text-center animate-on-scroll" style={{ transitionDelay: `${delay}s` }}>
+      <div className="h-10 w-10 rounded-lg bg-accent/10 flex items-center justify-center mx-auto mb-3">
+        <Icon className="h-5 w-5 text-accent" />
+      </div>
+      <p className="text-3xl md:text-4xl font-extrabold text-foreground tabular-nums">
+        {displayFn ? displayFn(count) : count.toLocaleString()}
+        <span className="text-accent">{suffix}</span>
+      </p>
+      <p className="text-sm text-muted-foreground mt-1">{label}</p>
+    </div>
+  );
+};
 
 const Landing = () => {
   const scrollRef = useScrollAnimation();
@@ -34,6 +84,18 @@ const Landing = () => {
             <Button size="lg" variant="outline" asChild className="h-12 text-base w-full sm:w-auto border-border text-foreground hover:bg-secondary">
               <Link to="/security">Read Security Whitepaper</Link>
             </Button>
+          </div>
+        </div>
+      </section>
+
+      {/* Metrics */}
+      <section className="py-16 px-4 border-y border-border/40">
+        <div className="mx-auto max-w-5xl">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
+            <MetricCard target={600} suffix="+" label="Active Users" icon={Users} delay={0} />
+            <MetricCard target={1200} suffix="+" label="Keys Stored" icon={Database} delay={0.1} />
+            <MetricCard target={999} suffix="%" label="Uptime" icon={Globe} delay={0.2} displayFn={(c) => (c / 10).toFixed(1)} />
+            <MetricCard target={0} suffix="" label="Keys Readable by Us" icon={ShieldCheck} delay={0.3} />
           </div>
         </div>
       </section>
