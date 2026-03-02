@@ -1,16 +1,13 @@
 import { Link } from "react-router-dom";
-import { Shield } from "lucide-react";
+import keyperLogo from "@/assets/keyper-logo.png";
 
 const Footer = () => (
-  <footer className="border-t border-border/50 bg-card/30">
+  <footer className="border-t border-border/50 bg-muted/30">
     <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-12">
       <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
         <div className="col-span-2 md:col-span-1">
           <Link to="/" className="flex items-center gap-2 mb-4">
-            <div className="h-7 w-7 rounded-md bg-gradient-primary flex items-center justify-center">
-              <Shield className="h-4 w-4 text-primary-foreground" />
-            </div>
-            <span className="text-lg font-bold">Keyper</span>
+            <img src={keyperLogo} alt="Keyper" className="h-7" />
           </Link>
           <p className="text-sm text-muted-foreground leading-relaxed">
             Your API keys, encrypted in your browser. Only you can see them.
