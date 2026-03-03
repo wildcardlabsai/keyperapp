@@ -41,7 +41,7 @@ const sidebarItems: { id: Tab; label: string; icon: typeof Key }[] = [
 
 const Dashboard = () => {
   const [tab, setTab] = useState<Tab>("overview");
-  const [locked, setLocked] = useState(false);
+  const [locked, setLocked] = useState(true);
   const [hasVault, setHasVault] = useState<boolean | null>(null);
   const [vaultInput, setVaultInput] = useState("");
   const [keys, setKeys] = useState<ApiKeyData[]>([]);
@@ -283,6 +283,7 @@ const Dashboard = () => {
     cryptoKeyRef.current = derived;
     await supabase.from("profiles").update({ vault_created: true }).eq("user_id", userId);
     setHasVault(true);
+    setLocked(false);
     addLog("Vault created");
     toast({ title: "Vault created", description: "Your vault is ready. Remember your passphrase — it cannot be recovered." });
     setVaultInput("");
