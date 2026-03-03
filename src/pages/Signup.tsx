@@ -42,7 +42,7 @@ const Signup = () => {
       return;
     }
     setLoading(true);
-    const { error } = await supabase.auth.signUp({
+    const { data, error } = await supabase.auth.signUp({
       email,
       password,
       options: { emailRedirectTo: window.location.origin },
@@ -52,6 +52,14 @@ const Signup = () => {
       toast({ variant: "destructive", title: "Signup failed", description: error.message });
     } else {
       setSuccess(true);
+      // Send branded welcome email via Resend
+      try {
+        await supabase.functions.invoke("send-welcome-email", {
+          body: { email, user_id: data?.user?.id },
+        });
+      } catch (e) {
+        console.error("Welcome email failed:", e);
+      }
     }
   };
 

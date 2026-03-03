@@ -1,16 +1,17 @@
 import { useState, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
-import { Shield, Users, BarChart3, ArrowLeft, Crown, User, MessageSquare, KeyRound, Trash2, Pencil, UserPlus, ArrowDown } from "lucide-react";
+import { Shield, Users, BarChart3, ArrowLeft, Crown, User, MessageSquare, KeyRound, Trash2, Pencil, UserPlus, ArrowDown, Mail, Send } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import AdminSupport from "@/components/admin/AdminSupport";
 
-type Tab = "users" | "metrics" | "support";
+type Tab = "users" | "metrics" | "support" | "email";
 
 type UserRow = {
   user_id: string;
@@ -45,6 +46,11 @@ const Admin = () => {
   const [addPassword, setAddPassword] = useState("");
   const [addPlan, setAddPlan] = useState("free");
   const [adding, setAdding] = useState(false);
+
+  // Mass email state
+  const [massSubject, setMassSubject] = useState("");
+  const [massBody, setMassBody] = useState("");
+  const [sendingMass, setSendingMass] = useState(false);
 
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -156,6 +162,29 @@ const Admin = () => {
     setDeleting(false);
   };
 
+  const handleSendMassEmail = async () => {
+    if (!massSubject.trim() || !massBody.trim()) {
+      toast({ variant: "destructive", title: "Enter a subject and body" });
+      return;
+    }
+    setSendingMass(true);
+    try {
+      const result = await callAdminFn("send-mass-email", {
+        subject: massSubject,
+        body: massBody,
+      });
+      toast({
+        title: "Emails sent",
+        description: `${result.sent} sent, ${result.failed} failed out of ${result.total} users`,
+      });
+      setMassSubject("");
+      setMassBody("");
+    } catch (err: any) {
+      toast({ variant: "destructive", title: "Failed", description: err.message });
+    }
+    setSendingMass(false);
+  };
+
   const handleAddUser = async () => {
     if (!addEmail || !addPassword || addPassword.length < 6) {
       toast({ variant: "destructive", title: "Enter a valid email and password (min 6 chars)" });
@@ -224,6 +253,9 @@ const Admin = () => {
           <button onClick={() => setTab("metrics")} className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${tab === "metrics" ? "bg-primary/10 text-primary" : "text-muted-foreground hover:text-foreground hover:bg-muted/50"}`}>
             <BarChart3 className="h-4 w-4" />Metrics
           </button>
+          <button onClick={() => setTab("email")} className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${tab === "email" ? "bg-primary/10 text-primary" : "text-muted-foreground hover:text-foreground hover:bg-muted/50"}`}>
+            <Mail className="h-4 w-4" />Email All Users
+          </button>
         </nav>
         <Link to="/dashboard" className="flex items-center gap-2 px-3 py-2.5 text-sm text-muted-foreground hover:text-foreground">
           <ArrowLeft className="h-4 w-4" />Back to dashboard
@@ -277,6 +309,30 @@ const Admin = () => {
         )}
 
         {tab === "support" && <AdminSupport />}
+
+        {tab === "email" && (
+          <div>
+            <h1 className="text-2xl font-bold mb-2">Email All Users</h1>
+            <p className="text-sm text-muted-foreground mb-6">Send a branded email to every registered user ({users.length} users).</p>
+            <div className="rounded-xl border border-border/50 bg-card/40 p-6 max-w-2xl space-y-4">
+              <div>
+                <Label>Subject</Label>
+                <Input value={massSubject} onChange={(e) => setMassSubject(e.target.value)} placeholder="e.g. New feature: Team Vaults are live!" className="bg-muted/50 mt-1" maxLength={200} />
+              </div>
+              <div>
+                <Label>Message body</Label>
+                <Textarea value={massBody} onChange={(e) => setMassBody(e.target.value)} placeholder="Write your message here. Each line becomes a paragraph in the email." rows={8} className="bg-muted/50 mt-1" />
+              </div>
+              <div className="flex items-center gap-3 pt-2">
+                <Button onClick={handleSendMassEmail} disabled={sendingMass || !massSubject.trim() || !massBody.trim()} className="bg-gradient-primary border-0">
+                  <Send className="mr-2 h-4 w-4" />
+                  {sendingMass ? "Sending..." : `Send to ${users.length} users`}
+                </Button>
+                <p className="text-xs text-muted-foreground">Emails are sent with Keyper branding.</p>
+              </div>
+            </div>
+          </div>
+        )}
 
         {tab === "metrics" && (
           <div>

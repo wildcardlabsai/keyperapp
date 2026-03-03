@@ -14,3 +14,15 @@ verify_jwt = false
 
 [functions.customer-portal]
 verify_jwt = false
+
+[functions.admin-manage-users]
+verify_jwt = false
+
+[functions.send-welcome-email]
+verify_jwt = false
+
+[functions.send-reset-email]
+verify_jwt = false
+
+[functions.send-mass-email]
+verify_jwt = false
