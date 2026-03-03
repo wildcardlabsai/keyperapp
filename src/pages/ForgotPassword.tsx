@@ -16,13 +16,22 @@ const ForgotPassword = () => {
     e.preventDefault();
     if (!email) return;
     setLoading(true);
+    const resetLink = `${window.location.origin}/reset-password`;
     const { error } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: `${window.location.origin}/reset-password`,
+      redirectTo: resetLink,
     });
     setLoading(false);
     if (error) {
       toast({ variant: "destructive", title: "Error", description: error.message });
     } else {
+      // Send branded reset email via Resend
+      try {
+        await supabase.functions.invoke("send-reset-email", {
+          body: { email, reset_link: resetLink },
+        });
+      } catch (e) {
+        console.error("Reset email send failed:", e);
+      }
       setSent(true);
     }
   };
