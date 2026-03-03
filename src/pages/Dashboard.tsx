@@ -61,6 +61,16 @@ const Dashboard = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
 
+  // Check Stripe subscription
+  const checkSubscription = useCallback(async () => {
+    try {
+      const { data, error } = await supabase.functions.invoke("check-subscription");
+      if (!error && data?.subscribed) {
+        setPlan("pro");
+      }
+    } catch {}
+  }, []);
+
   // Load user session & profile
   useEffect(() => {
     const init = async () => {
@@ -82,6 +92,9 @@ const Dashboard = () => {
       } else {
         setHasVault(false);
       }
+
+      // Check real subscription status from Stripe
+      checkSubscription();
     };
     init();
 
@@ -89,7 +102,7 @@ const Dashboard = () => {
       if (!session) navigate("/login");
     });
     return () => subscription.unsubscribe();
-  }, [navigate]);
+  }, [navigate, checkSubscription]);
 
   // Load keys (encrypted) from DB after vault is unlocked
   const loadKeys = useCallback(async () => {
@@ -365,10 +378,16 @@ const Dashboard = () => {
   };
 
   const handleUpgrade = async () => {
-    setPlan("pro");
-    await supabase.from("profiles").update({ plan: "pro" }).eq("user_id", userId);
+    try {
+      const { data, error } = await supabase.functions.invoke("create-checkout");
+      if (error) throw error;
+      if (data?.url) {
+        window.open(data.url, "_blank");
+      }
+    } catch (err: any) {
+      toast({ variant: "destructive", title: "Checkout failed", description: err.message });
+    }
     setShowUpgrade(false);
-    toast({ title: "Upgraded to Pro (Demo)", description: "You now have unlimited key storage." });
   };
 
   const handleChangePassword = async () => {
@@ -645,10 +664,21 @@ const Dashboard = () => {
               </div>
             </div>
             {plan === "free" ? (
-              <Button onClick={handleUpgrade} className="bg-gradient-primary border-0">Upgrade to Pro (Demo)</Button>
+              <Button onClick={handleUpgrade} className="bg-gradient-primary border-0">Upgrade to Pro — £4.99/month</Button>
             ) : (
-              <div className="rounded-xl border border-accent/30 bg-accent/5 p-4">
-                <p className="text-sm"><strong>Pro</strong> — You're using Pro. Billing will be enabled in a future update.</p>
+              <div className="space-y-3">
+                <div className="rounded-xl border border-accent/30 bg-accent/5 p-4">
+                  <p className="text-sm"><strong>Pro</strong> — Your subscription is active.</p>
+                </div>
+                <Button variant="outline" size="sm" onClick={async () => {
+                  try {
+                    const { data, error } = await supabase.functions.invoke("customer-portal");
+                    if (error) throw error;
+                    if (data?.url) window.open(data.url, "_blank");
+                  } catch (err: any) {
+                    toast({ variant: "destructive", title: "Error", description: err.message });
+                  }
+                }}>Manage subscription</Button>
               </div>
             )}
           </div>
@@ -722,7 +752,7 @@ const Dashboard = () => {
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setShowUpgrade(false)}>Not now</Button>
-            <Button onClick={handleUpgrade} className="bg-gradient-primary border-0">Start Pro demo</Button>
+            <Button onClick={handleUpgrade} className="bg-gradient-primary border-0">Upgrade to Pro</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
