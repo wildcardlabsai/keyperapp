@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import {
   Shield, Key, Settings, CreditCard, Activity, LogOut, Lock, Plus, Eye, EyeOff,
   Copy, Trash2, Search, Edit, Download, Upload, Clock, Check, LayoutDashboard,
-  AlertTriangle, Unlock, MessageSquare
+  AlertTriangle, Unlock, MessageSquare, Users
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -11,13 +11,16 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import AddKeyDialog, { type ApiKeyData } from "@/components/dashboard/AddKeyDialog";
+import EmptyState from "@/components/dashboard/EmptyState";
+import OnboardingTour from "@/components/dashboard/OnboardingTour";
+import TeamsTab from "@/components/dashboard/TeamsTab";
 import { supabase } from "@/integrations/supabase/client";
 import TwoFactorSetup from "@/components/dashboard/TwoFactorSetup";
 import SupportTab from "@/components/dashboard/SupportTab";
 import { useToast } from "@/hooks/use-toast";
 import { deriveKey, encrypt, decrypt } from "@/lib/crypto";
 
-type Tab = "overview" | "keys" | "settings" | "billing" | "security" | "support";
+type Tab = "overview" | "keys" | "teams" | "settings" | "billing" | "security" | "support";
 type ActivityEntry = { action: string; time: string };
 
 const formatDate = (d: string) => {
@@ -30,9 +33,36 @@ const formatDateTime = (d: string) => {
   return `${formatDate(d)} ${String(date.getHours()).padStart(2, "0")}:${String(date.getMinutes()).padStart(2, "0")}`;
 };
 
+const getExpiryStatus = (expiresAt: string | null | undefined): "none" | "green" | "yellow" | "red" => {
+  if (!expiresAt) return "none";
+  const now = new Date();
+  const exp = new Date(expiresAt);
+  const daysLeft = Math.ceil((exp.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+  if (daysLeft < 0) return "red";
+  if (daysLeft <= 7) return "red";
+  if (daysLeft <= 30) return "yellow";
+  return "green";
+};
+
+const expiryBadge = (expiresAt: string | null | undefined) => {
+  const status = getExpiryStatus(expiresAt);
+  if (status === "none") return null;
+  const now = new Date();
+  const exp = new Date(expiresAt!);
+  const daysLeft = Math.ceil((exp.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+  const label = daysLeft < 0 ? "Expired" : daysLeft === 0 ? "Expires today" : `${daysLeft}d left`;
+  const colors = {
+    green: "bg-emerald-500/15 text-emerald-400",
+    yellow: "bg-yellow-500/15 text-yellow-400",
+    red: "bg-destructive/15 text-destructive",
+  };
+  return <span className={`text-[10px] font-medium px-2 py-0.5 rounded-full ${colors[status]}`}>{label}</span>;
+};
+
 const sidebarItems: { id: Tab; label: string; icon: typeof Key }[] = [
   { id: "overview", label: "Overview", icon: LayoutDashboard },
   { id: "keys", label: "API Keys", icon: Key },
+  { id: "teams", label: "Teams", icon: Users },
   { id: "support", label: "Support", icon: MessageSquare },
   { id: "settings", label: "Settings", icon: Settings },
   { id: "billing", label: "Billing", icon: CreditCard },
@@ -57,6 +87,7 @@ const Dashboard = () => {
   const [userId, setUserId] = useState("");
   const [showUpgrade, setShowUpgrade] = useState(false);
   const [activityLog, setActivityLog] = useState<ActivityEntry[]>([]);
+  const [showOnboarding, setShowOnboarding] = useState(false);
   const cryptoKeyRef = useRef<CryptoKey | null>(null);
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -89,11 +120,13 @@ const Dashboard = () => {
         setHasVault(profile.vault_created);
         setPlan(profile.plan);
         setAutoLockMin(profile.auto_lock_minutes);
+        if (!(profile as any).onboarding_completed) {
+          setShowOnboarding(true);
+        }
       } else {
         setHasVault(false);
       }
 
-      // Check real subscription status from Stripe
       checkSubscription();
     };
     init();
@@ -103,6 +136,13 @@ const Dashboard = () => {
     });
     return () => subscription.unsubscribe();
   }, [navigate, checkSubscription]);
+
+  const completeOnboarding = async () => {
+    setShowOnboarding(false);
+    if (userId) {
+      await supabase.from("profiles").update({ onboarding_completed: true } as any).eq("user_id", userId);
+    }
+  };
 
   // Load keys (encrypted) from DB after vault is unlocked
   const loadKeys = useCallback(async () => {
@@ -117,10 +157,11 @@ const Dashboard = () => {
         name: k.name,
         service: k.service,
         environment: k.environment,
-        key: "••••••••••••••••••••", // placeholder, decrypt on reveal
+        key: "••••••••••••••••••••",
         createdAt: formatDate(k.created_at),
         tags: k.tags || "",
-        notes: "", // decrypt on demand
+        notes: "",
+        expiresAt: k.expires_at || null,
         _encrypted_key: k.encrypted_key,
         _iv: k.iv,
         _notes_encrypted: k.notes_encrypted,
@@ -237,7 +278,8 @@ const Dashboard = () => {
           tags: data.tags,
           notes_encrypted: notesEnc.ciphertext,
           notes_iv: notesEnc.iv,
-        }).eq("id", editKey.id);
+          expires_at: data.expiresAt || null,
+        } as any).eq("id", editKey.id);
         addLog(`Key updated: ${data.name}`);
         toast({ title: "Key updated" });
       } else {
@@ -251,7 +293,8 @@ const Dashboard = () => {
           tags: data.tags,
           notes_encrypted: notesEnc.ciphertext,
           notes_iv: notesEnc.iv,
-        });
+          expires_at: data.expiresAt || null,
+        } as any);
         addLog(`Key added: ${data.name}`);
         toast({ title: "Key added", description: `${data.name} has been saved to your vault.` });
       }
@@ -326,6 +369,7 @@ const Dashboard = () => {
         tags: k.tags,
         notes_encrypted: k.notes_encrypted,
         notes_iv: k.notes_iv,
+        expires_at: k.expires_at,
       })),
     };
     const blob = new Blob([JSON.stringify(backup, null, 2)], { type: "application/json" });
@@ -361,7 +405,8 @@ const Dashboard = () => {
             tags: k.tags || "",
             notes_encrypted: k.notes_encrypted || "",
             notes_iv: k.notes_iv || "",
-          });
+            expires_at: k.expires_at || null,
+          } as any);
         }
         addLog(`Imported ${backup.keys.length} keys from backup`);
         toast({ title: "Import complete", description: `${backup.keys.length} keys imported.` });
@@ -406,6 +451,11 @@ const Dashboard = () => {
     const matchSearch = !search || k.name.toLowerCase().includes(search.toLowerCase()) || k.service.toLowerCase().includes(search.toLowerCase()) || k.tags.toLowerCase().includes(search.toLowerCase());
     const matchService = filterService === "all" || k.service === filterService;
     return matchSearch && matchService;
+  });
+
+  const expiringKeys = keys.filter((k) => {
+    const status = getExpiryStatus(k.expiresAt);
+    return status === "red" || status === "yellow";
   });
 
   // Loading state
@@ -456,6 +506,8 @@ const Dashboard = () => {
 
   return (
     <div className="min-h-screen flex">
+      {showOnboarding && <OnboardingTour onComplete={completeOnboarding} />}
+
       {/* Sidebar */}
       <aside className="hidden md:flex w-64 flex-col border-r border-border/50 bg-sidebar p-4">
         <div className="flex items-center gap-2 mb-8 px-2">
@@ -512,6 +564,25 @@ const Dashboard = () => {
                 </div>
               ))}
             </div>
+
+            {/* Expiring keys warning */}
+            {expiringKeys.length > 0 && (
+              <div className="rounded-xl border border-yellow-500/30 bg-yellow-500/5 p-5 mb-6">
+                <div className="flex items-center gap-2 mb-3">
+                  <AlertTriangle className="h-4 w-4 text-yellow-400" />
+                  <h3 className="font-semibold text-sm">Expiring Soon</h3>
+                </div>
+                <div className="space-y-2">
+                  {expiringKeys.slice(0, 5).map((k) => (
+                    <div key={k.id} className="flex items-center justify-between text-sm">
+                      <span>{k.name}</span>
+                      {expiryBadge(k.expiresAt)}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
             <div className="rounded-xl border border-border/50 bg-card/40 p-6">
               <h3 className="font-semibold mb-4">Getting started</h3>
               <div className="space-y-3">
@@ -559,11 +630,21 @@ const Dashboard = () => {
               </Select>
             </div>
             {filteredKeys.length === 0 ? (
-              <div className="text-center py-16 text-muted-foreground">
-                <Key className="h-10 w-10 mx-auto mb-3 opacity-30" />
-                <p className="font-medium">No keys found</p>
-                <p className="text-sm mt-1">{keys.length === 0 ? "Add your first API key to get started." : "Try adjusting your search or filters."}</p>
-              </div>
+              keys.length === 0 ? (
+                <EmptyState
+                  icon={Key}
+                  title="Your vault is empty"
+                  description="Add your first API key to start storing and managing your secrets securely."
+                  actionLabel="Add your first key"
+                  onAction={() => setShowAdd(true)}
+                />
+              ) : (
+                <div className="text-center py-16 text-muted-foreground">
+                  <Search className="h-10 w-10 mx-auto mb-3 opacity-30" />
+                  <p className="font-medium">No keys match your filters</p>
+                  <p className="text-sm mt-1">Try adjusting your search or filters.</p>
+                </div>
+              )
             ) : (
               <div className="rounded-xl border border-border/50 bg-card/40 overflow-hidden">
                 <div className="hidden sm:grid grid-cols-[1fr_100px_80px_90px_120px] gap-4 px-5 py-3 text-xs text-muted-foreground font-medium border-b border-border/40">
@@ -572,7 +653,10 @@ const Dashboard = () => {
                 {filteredKeys.map((k) => (
                   <div key={k.id} className="grid sm:grid-cols-[1fr_100px_80px_90px_120px] gap-4 px-5 py-4 border-b border-border/30 last:border-0 items-center hover:bg-muted/20 transition-colors">
                     <div>
-                      <p className="text-sm font-medium">{k.name}</p>
+                      <div className="flex items-center gap-2">
+                        <p className="text-sm font-medium">{k.name}</p>
+                        {expiryBadge(k.expiresAt)}
+                      </div>
                       <p className="text-xs text-muted-foreground mt-0.5 font-mono">
                         {revealed.has(k.id) ? revealed.get(k.id) : "••••••••••••••••••••"}
                       </p>
@@ -700,7 +784,7 @@ const Dashboard = () => {
             <div className="rounded-xl border border-border/50 bg-card/40 p-6">
               <h3 className="font-semibold mb-4">Activity log</h3>
               {activityLog.length === 0 ? (
-                <p className="text-sm text-muted-foreground">No activity yet.</p>
+                <EmptyState icon={Activity} title="No activity yet" description="Your activity log will appear here once you start using your vault." />
               ) : (
                 <div className="space-y-3">
                   {activityLog.slice(0, 20).map((entry, i) => (
@@ -715,6 +799,8 @@ const Dashboard = () => {
             </div>
           </div>
         )}
+        {/* Teams */}
+        {tab === "teams" && <TeamsTab userId={userId} onSelectTeam={(teamId) => navigate(`/team/${teamId}`)} />}
         {/* Support */}
         {tab === "support" && <SupportTab userEmail={userEmail} userId={userId} />}
       </main>

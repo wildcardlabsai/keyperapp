@@ -4,6 +4,10 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Calendar } from "@/components/ui/calendar";
+import { CalendarIcon, X } from "lucide-react";
+import { format } from "date-fns";
 
 export type ApiKeyData = {
   id: string;
@@ -14,6 +18,7 @@ export type ApiKeyData = {
   createdAt: string;
   tags: string;
   notes: string;
+  expiresAt?: string | null;
 };
 
 type Props = {
@@ -30,11 +35,22 @@ const AddKeyDialog = ({ open, onClose, onSave, editData }: Props) => {
   const [key, setKey] = useState(editData?.key ?? "");
   const [tags, setTags] = useState(editData?.tags ?? "");
   const [notes, setNotes] = useState(editData?.notes ?? "");
+  const [expiresAt, setExpiresAt] = useState<Date | undefined>(
+    editData?.expiresAt ? new Date(editData.expiresAt) : undefined
+  );
 
   const handleSave = () => {
     if (!name.trim() || !key.trim()) return;
-    onSave({ name: name.trim(), service, environment, key: key.trim(), tags: tags.trim(), notes: notes.trim() });
-    setName(""); setService("Other"); setEnvironment("Production"); setKey(""); setTags(""); setNotes("");
+    onSave({
+      name: name.trim(),
+      service,
+      environment,
+      key: key.trim(),
+      tags: tags.trim(),
+      notes: notes.trim(),
+      expiresAt: expiresAt ? expiresAt.toISOString() : null,
+    });
+    setName(""); setService("Other"); setEnvironment("Production"); setKey(""); setTags(""); setNotes(""); setExpiresAt(undefined);
   };
 
   return (
@@ -75,6 +91,33 @@ const AddKeyDialog = ({ open, onClose, onSave, editData }: Props) => {
           <div>
             <label className="text-sm font-medium mb-1.5 block">API key *</label>
             <Input value={key} onChange={(e) => setKey(e.target.value)} placeholder="sk-..." className="bg-muted/50 font-mono text-sm" maxLength={500} />
+          </div>
+          <div>
+            <label className="text-sm font-medium mb-1.5 block">Expires (optional)</label>
+            <div className="flex items-center gap-2">
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button variant="outline" className="w-full justify-start text-left font-normal bg-muted/50">
+                    <CalendarIcon className="mr-2 h-4 w-4 text-muted-foreground" />
+                    {expiresAt ? format(expiresAt, "PPP") : <span className="text-muted-foreground">No expiry date</span>}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="start">
+                  <Calendar
+                    mode="single"
+                    selected={expiresAt}
+                    onSelect={setExpiresAt}
+                    disabled={(date) => date < new Date()}
+                    initialFocus
+                  />
+                </PopoverContent>
+              </Popover>
+              {expiresAt && (
+                <Button variant="ghost" size="icon" className="shrink-0 h-10 w-10" onClick={() => setExpiresAt(undefined)}>
+                  <X className="h-4 w-4" />
+                </Button>
+              )}
+            </div>
           </div>
           <div>
             <label className="text-sm font-medium mb-1.5 block">Tags</label>

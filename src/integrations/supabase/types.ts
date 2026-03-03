@@ -61,6 +61,7 @@ export type Database = {
           created_at: string
           encrypted_key: string
           environment: string
+          expires_at: string | null
           id: string
           iv: string
           name: string
@@ -74,6 +75,7 @@ export type Database = {
           created_at?: string
           encrypted_key: string
           environment?: string
+          expires_at?: string | null
           id?: string
           iv: string
           name: string
@@ -87,6 +89,7 @@ export type Database = {
           created_at?: string
           encrypted_key?: string
           environment?: string
+          expires_at?: string | null
           id?: string
           iv?: string
           name?: string
@@ -104,6 +107,7 @@ export type Database = {
           created_at: string
           email: string | null
           id: string
+          onboarding_completed: boolean
           plan: string
           updated_at: string
           user_id: string
@@ -114,6 +118,7 @@ export type Database = {
           created_at?: string
           email?: string | null
           id?: string
+          onboarding_completed?: boolean
           plan?: string
           updated_at?: string
           user_id: string
@@ -124,6 +129,7 @@ export type Database = {
           created_at?: string
           email?: string | null
           id?: string
+          onboarding_completed?: boolean
           plan?: string
           updated_at?: string
           user_id?: string
@@ -173,6 +179,118 @@ export type Database = {
         }
         Relationships: []
       }
+      team_keys: {
+        Row: {
+          added_by: string
+          created_at: string
+          encrypted_key: string
+          environment: string
+          expires_at: string | null
+          id: string
+          iv: string
+          name: string
+          notes_encrypted: string | null
+          notes_iv: string | null
+          service: string
+          tags: string | null
+          team_id: string
+        }
+        Insert: {
+          added_by: string
+          created_at?: string
+          encrypted_key: string
+          environment?: string
+          expires_at?: string | null
+          id?: string
+          iv: string
+          name: string
+          notes_encrypted?: string | null
+          notes_iv?: string | null
+          service?: string
+          tags?: string | null
+          team_id: string
+        }
+        Update: {
+          added_by?: string
+          created_at?: string
+          encrypted_key?: string
+          environment?: string
+          expires_at?: string | null
+          id?: string
+          iv?: string
+          name?: string
+          notes_encrypted?: string | null
+          notes_iv?: string | null
+          service?: string
+          tags?: string | null
+          team_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "team_keys_team_id_fkey"
+            columns: ["team_id"]
+            isOneToOne: false
+            referencedRelation: "teams"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      team_members: {
+        Row: {
+          accepted: boolean
+          id: string
+          invited_at: string
+          role: Database["public"]["Enums"]["team_role"]
+          team_id: string
+          user_id: string
+        }
+        Insert: {
+          accepted?: boolean
+          id?: string
+          invited_at?: string
+          role?: Database["public"]["Enums"]["team_role"]
+          team_id: string
+          user_id: string
+        }
+        Update: {
+          accepted?: boolean
+          id?: string
+          invited_at?: string
+          role?: Database["public"]["Enums"]["team_role"]
+          team_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "team_members_team_id_fkey"
+            columns: ["team_id"]
+            isOneToOne: false
+            referencedRelation: "teams"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      teams: {
+        Row: {
+          created_at: string
+          created_by: string
+          id: string
+          name: string
+        }
+        Insert: {
+          created_at?: string
+          created_by: string
+          id?: string
+          name: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          id?: string
+          name?: string
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           id: string
@@ -203,9 +321,22 @@ export type Database = {
         }
         Returns: boolean
       }
+      has_team_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["team_role"]
+          _team_id: string
+          _user_id: string
+        }
+        Returns: boolean
+      }
+      is_team_member: {
+        Args: { _team_id: string; _user_id: string }
+        Returns: boolean
+      }
     }
     Enums: {
       app_role: "admin" | "user"
+      team_role: "owner" | "editor" | "viewer"
       ticket_status: "open" | "in_progress" | "resolved"
     }
     CompositeTypes: {
@@ -335,6 +466,7 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["admin", "user"],
+      team_role: ["owner", "editor", "viewer"],
       ticket_status: ["open", "in_progress", "resolved"],
     },
   },
