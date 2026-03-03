@@ -1,99 +1,103 @@
 
 
-# Admin Account, Support System, and Knowledge Base
+## Feature Plan: 4 New Features for Keyper
 
-## 1. Create Admin Account
+### 1. Team/Organization Vaults (Shared Keys)
 
-I cannot create a user account directly through the database -- the user needs to sign up via the app first. Here's the approach:
+**Concept**: Users can create "teams," invite members by email, and share encrypted API keys within a shared vault. Each team has roles: owner, editor, viewer.
 
-- **You sign up** at `/signup` with email `mattoftaylor@gmail.com` and password `123456` (Supabase minimum is 6 characters, so this works)
-- Once signed up, I will **insert the admin role** into the `user_roles` table for your user ID
-- Alternatively, I can create an **edge function** that creates the account using the service role key and assigns the admin role in one step -- this is the cleaner approach and I will use it
+**Database changes**:
+- `teams` table: id, name, created_by (user_id), created_at
+- `team_members` table: id, team_id, user_id, role (owner/editor/viewer), invited_at, accepted
+- `team_keys` table: same structure as `api_keys` but with `team_id` instead of `user_id`, plus `added_by`
+- RLS policies ensuring only team members can access team keys, owners can manage members
 
-## 2. Admin Panel: Password Change for Users
+**New files**:
+- `src/pages/TeamDashboard.tsx` -- team vault view
+- `src/components/dashboard/TeamsTab.tsx` -- list of teams in user dashboard sidebar
+- `src/components/dashboard/InviteMemberDialog.tsx` -- invite modal
+- `supabase/functions/invite-team-member/index.ts` -- sends invite, creates pending record
 
-Add a "Reset password" action button per user in the Admin panel's user list. Since Supabase doesn't allow admins to set passwords directly from the client, this will:
-- Use an edge function with the service role key to call `admin.updateUserById()` to set a new password
-- Admin clicks "Reset password" on a user row, enters a new password in a dialog, and confirms
+**Modified files**:
+- `src/pages/Dashboard.tsx` -- add "Teams" tab to sidebar
+- `src/App.tsx` -- add `/team/:id` route
 
-## 3. Support Ticket System
+**Encryption consideration**: Team keys would need a shared encryption approach. Options:
+- Each team has its own passphrase that members must know
+- Or keys are re-encrypted per-member using their individual vault key (more complex but more secure)
 
-### Database
-- New `support_tickets` table: `id`, `user_id` (nullable for guest submissions), `name`, `email`, `subject`, `message`, `status` (open/in_progress/resolved), `priority`, `created_at`, `updated_at`, `admin_response`
-- RLS: users can read/insert their own tickets; admins can read/update all
+I recommend the **team passphrase** approach for simplicity -- team owners set it, share it out-of-band with members.
 
-### Contact/Support Page (`/contact`)
-- Redesign with two sections: **Contact Form** (for anyone) and **Knowledge Base** below
-- Form submissions save to `support_tickets` table AND send an email notification to `WildcardAILabs@gmail.com` via an edge function (will need an email service -- I'll store them in the DB and we can discuss email forwarding separately)
-- For now, tickets are stored in the database and viewable by admins
+---
 
-### Dashboard Support Tab
-- Add a "Support" tab to the dashboard sidebar
-- Shows the logged-in user's tickets with status badges
-- "New Ticket" button to create a ticket from the dashboard
-- View ticket details and any admin responses
+### 2. API Key Expiry & Rotation Alerts
 
-### Admin Panel: Support Tab
-- Add a "Support" tab to the admin sidebar
-- View all tickets, filter by status
-- Click a ticket to view details and write a response
-- Change ticket status (open / in progress / resolved)
+**Concept**: Users can optionally set an expiration date when adding/editing a key. The dashboard shows warnings for keys expiring within 7 days. A scheduled function checks daily and could send email alerts.
 
-## 4. Knowledge Base
+**Database changes**:
+- Add `expires_at` (timestamp, nullable) column to `api_keys` table
 
-Populate the Support/Contact page with a searchable knowledge base section containing articles relevant to Keyper. Categories and articles:
+**Modified files**:
+- `src/components/dashboard/AddKeyDialog.tsx` -- add optional date picker for expiry
+- `src/pages/Dashboard.tsx`:
+  - Overview tab shows "Expiring Soon" warning cards for keys within 7 days
+  - Keys list shows expiry badges (green/yellow/red)
+- `supabase/functions/check-expiring-keys/index.ts` -- daily cron function that queries keys expiring in 7 days (optional email notification)
 
-**Getting Started**
-- How to create your vault
-- Adding your first API key
-- Understanding your vault passphrase
+**UI indicators**:
+- Green badge: >30 days or no expiry
+- Yellow badge: 7-30 days
+- Red badge: <7 days or expired
 
-**Security**
-- How Keyper encrypts your data
-- What is zero-knowledge encryption?
-- Two-factor authentication setup
+---
 
-**Managing Keys**
-- Organizing keys with tags and environments
-- Importing and exporting your vault
-- Understanding key limits (Free vs Pro)
+### 3. Changelog / What's New Page
 
-**Account & Billing**
-- Upgrading to Pro
-- Changing your password
-- Deleting your account
+**Concept**: A public `/changelog` page showing product updates in a clean timeline format. Entries are hardcoded initially but could later be managed from the admin panel.
 
-**Troubleshooting**
-- I forgot my vault passphrase
-- My key won't decrypt
-- Login issues and account recovery
+**New files**:
+- `src/pages/Changelog.tsx` -- timeline-style page with version entries
+- `src/lib/changelogData.ts` -- array of changelog entries (date, version, title, description, tags like "feature", "fix", "improvement")
 
-Each article will have a title, category, and body content -- all hardcoded (no DB needed). The knowledge base will be searchable.
+**Modified files**:
+- `src/App.tsx` -- add `/changelog` route
+- `src/components/landing/Navbar.tsx` -- add "Changelog" link
+- `src/components/landing/Footer.tsx` -- add "Changelog" link
 
-## 5. Navbar Update
+**Design**: Clean vertical timeline with date markers, version badges, and categorized entries. Could include a "New" badge in the navbar when there are recent updates.
 
-- Rename the "Support" link to point to `/support` (knowledge base + contact form page)
-- Keep `/contact` redirecting or merge into `/support`
+---
 
-## Technical Summary
+### 4. Onboarding Tour & Empty States
 
-### New Database Tables
-- `support_tickets` with RLS policies
+**Concept**: First-time users get a step-by-step guided tour highlighting key features. Empty states show helpful illustrations and CTAs instead of blank screens.
 
-### New Files
-- `src/pages/Support.tsx` -- Knowledge base + contact form
-- `src/components/dashboard/SupportTab.tsx` -- User's ticket list in dashboard
-- `src/components/admin/AdminSupport.tsx` -- Admin ticket management
-- `supabase/functions/create-admin/index.ts` -- Edge function to create admin account
-- `supabase/functions/admin-reset-password/index.ts` -- Edge function for password reset
+**Implementation approach**:
+- Track onboarding completion in `profiles` table (`onboarding_completed` boolean column)
+- Use a lightweight tooltip/spotlight overlay (custom built, no heavy library)
+- Tour steps: (1) Welcome, (2) "Add your first key" button, (3) Sidebar navigation, (4) Security settings
 
-### Modified Files
-- `src/pages/Dashboard.tsx` -- Add "Support" tab to sidebar and render SupportTab
-- `src/pages/Admin.tsx` -- Add "Support" tab and password reset dialog
-- `src/components/landing/Navbar.tsx` -- Update support link
-- `src/App.tsx` -- Add `/support` route
-- `src/components/landing/Footer.tsx` -- Update support link
+**Database changes**:
+- Add `onboarding_completed` (boolean, default false) to `profiles` table
 
-### Database Migration
-- Create `support_tickets` table with appropriate columns and RLS policies
+**New files**:
+- `src/components/dashboard/OnboardingTour.tsx` -- overlay component with step-by-step tooltips
+- `src/components/dashboard/EmptyState.tsx` -- reusable empty state component with illustration, title, description, CTA
+
+**Modified files**:
+- `src/pages/Dashboard.tsx` -- render OnboardingTour on first login, use EmptyState when no keys exist
+
+**Empty state designs for**:
+- No API keys yet: "Your vault is empty" with illustration + "Add your first key" button
+- No activity log entries: "No activity yet"
+- No support tickets: "All clear! No tickets."
+
+---
+
+### Suggested Implementation Order
+
+1. **Onboarding tour & empty states** -- quick win, improves UX immediately
+2. **API key expiry & rotation alerts** -- single table change, high practical value
+3. **Changelog page** -- static content, quick to build
+4. **Team vaults** -- most complex, involves shared encryption design
 
