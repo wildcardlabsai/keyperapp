@@ -17,8 +17,16 @@ const Login = () => {
   const { toast } = useToast();
 
   useEffect(() => {
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_, session) => {
-      if (session) navigate("/dashboard", { replace: true });
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_, session) => {
+      if (session) {
+        const { data } = await supabase
+          .from("user_roles")
+          .select("role")
+          .eq("user_id", session.user.id)
+          .eq("role", "admin")
+          .maybeSingle();
+        navigate(data ? "/admin" : "/dashboard", { replace: true });
+      }
     });
     return () => subscription.unsubscribe();
   }, [navigate]);
@@ -39,7 +47,13 @@ const Login = () => {
     if (hasVerifiedTotp) {
       navigate("/verify-2fa");
     } else {
-      navigate("/dashboard");
+      const { data: roleData } = await supabase
+        .from("user_roles")
+        .select("role")
+        .eq("user_id", data.user!.id)
+        .eq("role", "admin")
+        .maybeSingle();
+      navigate(roleData ? "/admin" : "/dashboard");
     }
   };
 
