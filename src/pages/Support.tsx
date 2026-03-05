@@ -52,6 +52,10 @@ const Support = () => {
     if (error) {
       toast({ variant: "destructive", title: "Failed to send", description: "Please try again later." });
     } else {
+      // Send email notification
+      supabase.functions.invoke("notify-support-ticket", {
+        body: { name: name.trim(), email: email.trim(), subject: subject.trim(), message: message.trim() },
+      });
       toast({ title: "Message sent!", description: "We'll get back to you shortly." });
       setName(""); setEmail(""); setSubject(""); setMessage("");
     }
