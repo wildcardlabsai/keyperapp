@@ -227,7 +227,7 @@ const Landing = () => {
       <section className="py-24 px-4">
         <div className="mx-auto max-w-4xl">
           <h2 className="text-3xl md:text-4xl font-bold text-center mb-16 text-foreground animate-on-scroll">How Keyper Works</h2>
-          <div className="flex flex-col sm:flex-row items-center sm:items-start text-center gap-0">
+          <div className="grid sm:grid-cols-[1fr_auto_1fr_auto_1fr] items-start text-center gap-y-10">
             {[
               {
                 step: "1",
@@ -250,44 +250,32 @@ const Landing = () => {
                 icon: Shield,
                 color: "border-purple-400 text-purple-400",
               },
-            ].map((item, i) => (
-              <div key={i} className="flex flex-col sm:flex-row items-center flex-1 w-full">
-                <div className="flex flex-col items-center animate-on-scroll" style={{ transitionDelay: `${i * 0.15}s` }}>
+            ].flatMap((item, i) => {
+              const card = (
+                <div key={`step-${i}`} className="flex flex-col items-center animate-on-scroll" style={{ transitionDelay: `${i * 0.15}s` }}>
                   <div className={`h-20 w-20 rounded-full border-2 ${item.color} flex items-center justify-center mb-6`}>
                     <item.icon className="h-8 w-8" />
                   </div>
                   <h4 className="font-bold text-lg mb-2 text-foreground">{item.step}. {item.title}</h4>
                   <p className="text-muted-foreground leading-relaxed text-sm px-2">{item.desc}</p>
                 </div>
-                {/* Connector with animated pulse */}
-                {i < 2 && (
-                  <div className="hidden sm:flex items-center justify-center w-[140px] flex-shrink-0 relative mt-[-60px]">
-                    {/* Connector line */}
+              );
+              if (i < 2) {
+                const connector = (
+                  <div key={`conn-${i}`} className="hidden sm:flex items-center justify-center w-[100px] relative" style={{ marginTop: "40px" }}>
                     <div className="w-full h-px bg-border" />
-                    {/* Pulse dot */}
                     <div className="absolute left-0 top-1/2 -translate-y-1/2">
                       <div className="payload-pulse relative">
-                        {/* Glow trail */}
                         <div className="absolute inset-0 w-2 h-2 rounded-full bg-accent/50 blur-sm" />
-                        {/* Main dot */}
                         <div className="w-2 h-2 rounded-full bg-accent shadow-[0_0_8px_hsl(187_80%_48%/0.8)]" />
                       </div>
                     </div>
                   </div>
-                )}
-                {/* Mobile vertical connector */}
-                {i < 2 && (
-                  <div className="flex sm:hidden items-center justify-center h-12 relative">
-                    <div className="h-full w-px bg-border" />
-                    <div className="absolute top-0 left-1/2 -translate-x-1/2">
-                      <div className="payload-pulse" style={{ animation: "payloadPulseVertical 2.5s linear infinite" }}>
-                        <div className="w-2 h-2 rounded-full bg-accent shadow-[0_0_8px_hsl(187_80%_48%/0.8)]" />
-                      </div>
-                    </div>
-                  </div>
-                )}
-              </div>
-            ))}
+                );
+                return [card, connector];
+              }
+              return [card];
+            })}
           </div>
         </div>
       </section>
