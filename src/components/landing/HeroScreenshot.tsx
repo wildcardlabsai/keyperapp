@@ -53,7 +53,7 @@ const HeroScreenshot = ({ visible }: { visible: boolean }) => {
         onMouseLeave={handleMouseLeave}
         className={`relative rounded-2xl border border-white/10 bg-gradient-to-b from-white/5 to-transparent shadow-[0_20px_80px_rgba(0,0,0,0.6)] backdrop-blur-sm p-3 transition-all duration-700 ease-[cubic-bezier(.21,1.02,.73,1)] motion-reduce:!opacity-100 motion-reduce:!translate-y-0 motion-reduce:transition-none ${visible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-6"}`}
         style={{
-          transitionDelay: visible ? "300ms" : "0ms",
+          transitionDelay: visible ? "420ms" : "0ms",
           transform: reducedMotion
             ? undefined
             : `perspective(900px) rotateX(${tilt.rotateX}deg) rotateY(${tilt.rotateY}deg) scale(${tilt.scale})${visible ? "" : " translateY(24px)"}`,
