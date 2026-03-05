@@ -802,6 +802,8 @@ const Dashboard = () => {
         )}
         {/* Teams */}
         {tab === "teams" && <TeamsTab userId={userId} onSelectTeam={(teamId) => navigate(`/team/${teamId}`)} />}
+        {/* Developer Tools */}
+        {tab === "devtools" && <DeveloperToolsTab userId={userId} />}
         {/* Support */}
         {tab === "support" && <SupportTab userEmail={userEmail} userId={userId} />}
       </main>

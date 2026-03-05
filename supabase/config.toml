@@ -26,3 +26,6 @@ verify_jwt = false
 
 [functions.send-mass-email]
 verify_jwt = false
+
+[functions.vault-api]
+verify_jwt = false
