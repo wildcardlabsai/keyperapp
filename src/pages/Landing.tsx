@@ -300,6 +300,9 @@ const Landing = () => {
       {/* Testimonials */}
       <Testimonials />
 
+      {/* Pricing Teaser */}
+      <PricingTeaser />
+
       {/* CTA */}
       <section className="py-24 px-4 relative overflow-hidden">
         <div className="absolute inset-0 section-glow-top" />
