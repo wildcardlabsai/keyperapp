@@ -134,6 +134,9 @@ const Landing = () => {
         </div>
       </section>
 
+      {/* Trusted By */}
+      <TrustedBy />
+
       {/* Metrics */}
       <section className="py-16 px-4 border-y border-border/40">
         <div className="mx-auto max-w-5xl">
