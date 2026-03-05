@@ -49,7 +49,11 @@ const Contact = () => {
               <Mail className="h-6 w-6 text-primary" />
             </div>
             <h1 className="text-4xl font-bold mb-3">Contact us</h1>
-            <p className="text-muted-foreground">Have a question or feedback? We'd love to hear from you.</p>
+            <p className="text-muted-foreground mb-2">Have a question or feedback? We'd love to hear from you.</p>
+            <p className="text-sm text-muted-foreground flex items-center justify-center gap-1.5">
+              <Phone className="h-3.5 w-3.5 text-primary" />
+              Call us: <a href="tel:+443300435658" className="text-primary hover:underline">+44 330 043 5658</a>
+            </p>
           </div>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
