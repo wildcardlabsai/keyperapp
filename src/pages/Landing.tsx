@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import Navbar from "@/components/landing/Navbar";
 import Footer from "@/components/landing/Footer";
 import { useScrollAnimation } from "@/hooks/useScrollAnimation";
+import { useInView } from "@/hooks/useInView";
 import { useEffect, useRef, useState } from "react";
 
 const useCountUp = (target: number, duration = 2000, startOnView = true) => {
@@ -58,7 +59,7 @@ const MetricCard = ({ target, suffix, label, icon: Icon, delay, displayFn }: {
 
 const Landing = () => {
   const scrollRef = useScrollAnimation();
-
+  const { ref: encryptionRef, isInView: encryptionInView } = useInView<HTMLDivElement>();
   return (
     <div className="min-h-screen bg-background page-grid" ref={scrollRef}>
       <Navbar />
@@ -106,12 +107,15 @@ const Landing = () => {
         <div className="mx-auto max-w-6xl">
           <div className="grid lg:grid-cols-2 gap-6">
             {/* Military-Grade Encryption - Large card */}
-            <div className="rounded-2xl border border-border bg-card p-8 lg:row-span-2 animate-on-scroll hover:-translate-y-1 hover:border-accent/30 transition-all duration-300">
+            <div
+              ref={encryptionRef}
+              className={`rounded-2xl border border-border bg-card p-8 lg:row-span-2 hover:-translate-y-1 hover:border-accent/30 transition-all duration-700 ease-[cubic-bezier(.21,1.02,.73,1)] motion-reduce:transition-none motion-reduce:!opacity-100 motion-reduce:!translate-y-0 ${encryptionInView ? "opacity-100 translate-y-0" : "opacity-0 translate-y-10"}`}
+            >
               <h3 className="text-2xl font-bold mb-3 text-foreground">Military-Grade Encryption</h3>
               <p className="text-muted-foreground mb-6 leading-relaxed">
                 Your master passphrase never leaves your device. We use PBKDF2 to derive a key, then encrypt your secrets with AES-GCM before syncing.
               </p>
-              <div className="code-block rounded-xl p-5 font-mono text-sm space-y-2 glow-code">
+              <div className={`code-block rounded-xl p-5 font-mono text-sm space-y-2 glow-code transition-all duration-700 ease-out delay-200 motion-reduce:transition-none motion-reduce:!opacity-100 motion-reduce:!translate-y-0 ${encryptionInView ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"}`}>
                 <div className="flex items-center gap-2 mb-4">
                   <span className="h-3 w-3 rounded-full bg-red-500" />
                   <span className="h-3 w-3 rounded-full bg-yellow-500" />
