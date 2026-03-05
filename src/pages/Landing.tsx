@@ -91,8 +91,8 @@ const Landing = () => {
               <span className="text-gradient">Actually Trust.</span>
             </h1>
             <p
-              className={`text-lg md:text-xl text-muted-foreground max-w-xl mb-8 leading-relaxed transition-all duration-700 ease-[cubic-bezier(.21,1.02,.73,1)] motion-reduce:!opacity-100 motion-reduce:!translate-y-0 motion-reduce:transition-none ${heroInView ? "opacity-100 translate-y-0" : "opacity-0 translate-y-6"}`}
-              style={{ transitionDelay: "200ms" }}
+              className={`text-lg md:text-xl text-muted-foreground max-w-xl mb-8 leading-relaxed transition-all duration-700 ease-[cubic-bezier(.21,1.02,.73,1)] motion-reduce:!opacity-100 motion-reduce:!translate-y-0 motion-reduce:transition-none ${heroMounted ? "opacity-100 translate-y-0" : "opacity-0 translate-y-6"}`}
+              style={{ transitionDelay: "120ms" }}
             >
               Stop pasting production secrets into Slack. Keyper encrypts your API keys in the browser using AES-GCM. Our servers never see your plaintext.
             </p>
