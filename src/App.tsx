@@ -7,7 +7,7 @@ import { ThemeProvider } from "next-themes";
 import { ProtectedRoute, AdminRoute } from "@/components/auth/RouteGuards";
 import ScrollToTop from "@/components/ScrollToTop";
 import PageTransition from "@/components/PageTransition";
-import ChatWidget from "@/components/ChatWidget";
+import { lazy, Suspense, useEffect, useState } from "react";
 import Landing from "./pages/Landing";
 import FeaturesPage from "./pages/FeaturesPage";
 import SecurityPage from "./pages/SecurityPage";

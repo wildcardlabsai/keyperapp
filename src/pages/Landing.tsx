@@ -1,54 +1,45 @@
 import { Link } from "react-router-dom";
 import { Shield, Lock, EyeOff, ArrowRight, Key, Code, Tag, Download, Users, Database, ShieldCheck, Globe, Check } from "lucide-react";
-import Testimonials from "@/components/landing/Testimonials";
 import { Button } from "@/components/ui/button";
 import Navbar from "@/components/landing/Navbar";
 import Footer from "@/components/landing/Footer";
 import HeroScreenshot from "@/components/landing/HeroScreenshot";
-import TrustedBy from "@/components/landing/TrustedBy";
-import PricingTeaser from "@/components/landing/PricingTeaser";
-import MobileCTA from "@/components/landing/MobileCTA";
 import { useScrollAnimation } from "@/hooks/useScrollAnimation";
 import { useInView } from "@/hooks/useInView";
-import { useEffect, useRef, useState } from "react";
+import { lazy, Suspense, useEffect, useRef, useState } from "react";
 
-const useCountUp = (target: number, duration = 2000, startOnView = true) => {
+const Testimonials = lazy(() => import("@/components/landing/Testimonials"));
+const PricingTeaser = lazy(() => import("@/components/landing/PricingTeaser"));
+const TrustedBy = lazy(() => import("@/components/landing/TrustedBy"));
+const MobileCTA = lazy(() => import("@/components/landing/MobileCTA"));
+
+const useCountUp = (target: number, duration = 2000, trigger = false) => {
   const [count, setCount] = useState(0);
-  const ref = useRef<HTMLDivElement>(null);
   const started = useRef(false);
 
   useEffect(() => {
-    if (!startOnView || !ref.current) return;
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        if (entry.isIntersecting && !started.current) {
-          started.current = true;
-          const start = performance.now();
-          const step = (now: number) => {
-            const progress = Math.min((now - start) / duration, 1);
-            const eased = 1 - Math.pow(1 - progress, 3); // ease-out cubic
-            setCount(Math.floor(eased * target));
-            if (progress < 1) requestAnimationFrame(step);
-          };
-          requestAnimationFrame(step);
-        }
-      },
-      { threshold: 0.3 }
-    );
-    observer.observe(ref.current);
-    return () => observer.disconnect();
-  }, [target, duration, startOnView]);
+    if (!trigger || started.current) return;
+    started.current = true;
+    const start = performance.now();
+    const step = (now: number) => {
+      const progress = Math.min((now - start) / duration, 1);
+      const eased = 1 - Math.pow(1 - progress, 3);
+      setCount(Math.floor(eased * target));
+      if (progress < 1) requestAnimationFrame(step);
+    };
+    requestAnimationFrame(step);
+  }, [trigger, target, duration]);
 
-  return { count, ref };
+  return count;
 };
 
-const MetricCard = ({ target, suffix, label, icon: Icon, delay, displayFn }: {
+const MetricCard = ({ target, suffix, label, icon: Icon, delay, displayFn, trigger }: {
   target: number; suffix: string; label: string; icon: any; delay: number;
-  displayFn?: (count: number) => string;
+  displayFn?: (count: number) => string; trigger: boolean;
 }) => {
-  const { count, ref } = useCountUp(target, 2000);
+  const count = useCountUp(target, 2000, trigger);
   return (
-    <div ref={ref} className="text-center animate-on-scroll" style={{ transitionDelay: `${delay}s` }}>
+    <div className="text-center animate-on-scroll" style={{ transitionDelay: `${delay}s` }}>
       <div className="h-10 w-10 rounded-lg bg-accent/10 flex items-center justify-center mx-auto mb-3">
         <Icon className="h-5 w-5 text-accent" />
       </div>
@@ -64,6 +55,7 @@ const MetricCard = ({ target, suffix, label, icon: Icon, delay, displayFn }: {
 const Landing = () => {
   const scrollRef = useScrollAnimation();
   const { ref: encryptionRef, isInView: encryptionInView } = useInView<HTMLDivElement>();
+  const { ref: metricsRef, isInView: metricsInView } = useInView<HTMLDivElement>({ threshold: 0.3 });
   const [heroMounted, setHeroMounted] = useState(false);
 
   useEffect(() => {
@@ -135,22 +127,22 @@ const Landing = () => {
       </section>
 
       {/* Trusted By */}
-      <TrustedBy />
+      <Suspense fallback={null}><TrustedBy /></Suspense>
 
       {/* Metrics */}
-      <section className="py-16 px-4 border-y border-border/40">
-        <div className="mx-auto max-w-5xl">
+      <section className="py-16 px-4 border-y border-border/40 content-auto">
+        <div className="mx-auto max-w-5xl" ref={metricsRef}>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
-            <MetricCard target={600} suffix="+" label="Active Users" icon={Users} delay={0} />
-            <MetricCard target={1200} suffix="+" label="Keys Stored" icon={Database} delay={0.1} />
-            <MetricCard target={999} suffix="%" label="Uptime" icon={Globe} delay={0.2} displayFn={(c) => (c / 10).toFixed(1)} />
-            <MetricCard target={0} suffix="" label="Keys Readable by Us" icon={ShieldCheck} delay={0.3} />
+            <MetricCard target={600} suffix="+" label="Active Users" icon={Users} delay={0} trigger={metricsInView} />
+            <MetricCard target={1200} suffix="+" label="Keys Stored" icon={Database} delay={0.1} trigger={metricsInView} />
+            <MetricCard target={999} suffix="%" label="Uptime" icon={Globe} delay={0.2} displayFn={(c) => (c / 10).toFixed(1)} trigger={metricsInView} />
+            <MetricCard target={0} suffix="" label="Keys Readable by Us" icon={ShieldCheck} delay={0.3} trigger={metricsInView} />
           </div>
         </div>
       </section>
 
       {/* Features */}
-      <section className="py-24 px-4">
+      <section className="py-24 px-4 content-auto">
         <div className="mx-auto max-w-6xl">
           <div className="grid lg:grid-cols-2 gap-6">
             {/* Military-Grade Encryption - Large card */}
@@ -244,7 +236,7 @@ const Landing = () => {
       </section>
 
       {/* How it works */}
-      <section className="py-24 px-4">
+      <section className="py-24 px-4 content-auto">
         <div className="mx-auto max-w-4xl">
           <h2 className="text-3xl md:text-4xl font-bold text-center mb-16 text-foreground animate-on-scroll">How Keyper Works</h2>
           <div className="grid sm:grid-cols-[1fr_auto_1fr_auto_1fr] items-start text-center gap-y-10">
@@ -301,13 +293,13 @@ const Landing = () => {
       </section>
 
       {/* Testimonials */}
-      <Testimonials />
+      <Suspense fallback={null}><Testimonials /></Suspense>
 
       {/* Pricing Teaser */}
-      <PricingTeaser />
+      <Suspense fallback={null}><PricingTeaser /></Suspense>
 
       {/* CTA */}
-      <section className="py-24 px-4 relative overflow-hidden">
+      <section className="py-24 px-4 relative overflow-hidden content-auto">
         <div className="absolute inset-0 section-glow-top" />
         <div className="relative mx-auto max-w-3xl text-center animate-on-scroll">
           <h2 className="text-3xl md:text-4xl font-bold mb-4 text-foreground">Ready to secure your secrets?</h2>
@@ -322,7 +314,7 @@ const Landing = () => {
       </section>
 
       <Footer />
-      <MobileCTA />
+      <Suspense fallback={null}><MobileCTA /></Suspense>
     </div>
   );
 };
