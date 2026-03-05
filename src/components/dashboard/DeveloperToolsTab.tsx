@@ -229,7 +229,9 @@ const DeveloperToolsTab = ({ userId }: Props) => {
                     <div className="mt-1 ml-4 space-y-1">
                       <div><code className="bg-muted/50 px-1.5 py-0.5 rounded text-foreground">node keyper-cli.js list</code> — List all keys</div>
                       <div><code className="bg-muted/50 px-1.5 py-0.5 rounded text-foreground">node keyper-cli.js get "My API Key"</code> — Decrypt & show</div>
-                      <div><code className="bg-muted/50 px-1.5 py-0.5 rounded text-foreground">node keyper-cli.js copy "My API Key"</code> — Decrypt & copy</div>
+                      <div><code className="bg-muted/50 px-1.5 py-0.5 rounded text-foreground">node keyper-cli.js env list</code> — List projects</div>
+                      <div><code className="bg-muted/50 px-1.5 py-0.5 rounded text-foreground">node keyper-cli.js env pull --project "My App" --env local</code> — Print .env</div>
+                      <div><code className="bg-muted/50 px-1.5 py-0.5 rounded text-foreground">node keyper-cli.js env write --project "My App" --env production</code> — Write .env file</div>
                     </div>
                   </li>
                 </ol>
