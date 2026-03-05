@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
 import { Shield, Lock, EyeOff, ArrowRight, Key, Code, Tag, Download, Users, Database, ShieldCheck, Globe, Check } from "lucide-react";
+import RotatingWord from "@/components/landing/RotatingWord";
 import { Button } from "@/components/ui/button";
 import Navbar from "@/components/landing/Navbar";
 import Footer from "@/components/landing/Footer";
