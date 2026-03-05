@@ -97,8 +97,8 @@ const Landing = () => {
               Stop pasting production secrets into Slack. Keyper encrypts your API keys in the browser using AES-GCM. Our servers never see your plaintext.
             </p>
             <div
-              className={`flex flex-col sm:flex-row items-start gap-4 mb-8 transition-all duration-700 ease-[cubic-bezier(.21,1.02,.73,1)] motion-reduce:!opacity-100 motion-reduce:!translate-y-0 motion-reduce:transition-none ${heroInView ? "opacity-100 translate-y-0" : "opacity-0 translate-y-6"}`}
-              style={{ transitionDelay: "300ms" }}
+              className={`flex flex-col sm:flex-row items-start gap-4 mb-8 transition-all duration-700 ease-[cubic-bezier(.21,1.02,.73,1)] motion-reduce:!opacity-100 motion-reduce:!translate-y-0 motion-reduce:transition-none ${heroMounted ? "opacity-100 translate-y-0" : "opacity-0 translate-y-6"}`}
+              style={{ transitionDelay: "240ms" }}
             >
               <Button size="lg" asChild className="bg-gradient-primary border-0 text-primary-foreground px-8 h-12 text-base w-full sm:w-auto hover:scale-[1.03] hover:shadow-[0_0_30px_-5px_hsl(187_80%_48%/0.4)] transition-all duration-300">
                 <Link to="/signup">Create Free Vault <ArrowRight className="ml-2 h-4 w-4" /></Link>
