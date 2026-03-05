@@ -6,6 +6,7 @@ import {
   AlertTriangle, Unlock, MessageSquare, Users
 } from "lucide-react";
 import keyperIcon from "@/assets/keyper-icon.png";
+import keyperLogo from "@/assets/keyper-logo.png";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -511,9 +512,8 @@ const Dashboard = () => {
 
       {/* Sidebar */}
       <aside className="hidden md:flex w-64 flex-col border-r border-border/50 bg-sidebar p-4">
-        <div className="flex items-center gap-2 mb-8 px-2">
-          <img src={keyperIcon} alt="Keyper" className="h-8 w-8" />
-          <span className="text-lg font-bold">Keyper</span>
+        <div className="flex items-center mb-8 px-2">
+          <img src={keyperLogo} alt="Keyper" className="h-8" />
         </div>
         <nav className="space-y-1 flex-1">
           {sidebarItems.map((item) => (
