@@ -84,8 +84,8 @@ const Landing = () => {
           {/* Left column */}
           <div className="flex flex-col items-start">
             <h1
-              className={`text-4xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight mb-6 leading-[1.1] text-foreground transition-all duration-700 ease-[cubic-bezier(.21,1.02,.73,1)] motion-reduce:!opacity-100 motion-reduce:!translate-y-0 motion-reduce:transition-none ${heroInView ? "opacity-100 translate-y-0" : "opacity-0 translate-y-6"}`}
-              style={{ transitionDelay: "100ms" }}
+              className={`text-4xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight mb-6 leading-[1.1] text-foreground transition-all duration-700 ease-[cubic-bezier(.21,1.02,.73,1)] motion-reduce:!opacity-100 motion-reduce:!translate-y-0 motion-reduce:transition-none ${heroMounted ? "opacity-100 translate-y-0" : "opacity-0 translate-y-6"}`}
+              style={{ transitionDelay: "0ms" }}
             >
               The API Key Manager You Can{" "}
               <span className="text-gradient">Actually Trust.</span>
