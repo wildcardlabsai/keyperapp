@@ -287,7 +287,8 @@ const EnvironmentGeneratorTab = ({ userId, cryptoKey }: Props) => {
             icon={FolderOpen}
             title="Create your first project"
             description="Start generating .env files by creating a project to organize your secrets."
-            action={<Button size="sm" onClick={() => setShowNewProject(true)}><Plus className="h-4 w-4 mr-1" />Create Project</Button>}
+            actionLabel="Create Project"
+            onAction={() => setShowNewProject(true)}
           />
         ) : (
           <div className="grid gap-2">
