@@ -115,18 +115,28 @@ const Landing = () => {
               <p className="text-muted-foreground mb-6 leading-relaxed">
                 Your master passphrase never leaves your device. We use PBKDF2 to derive a key, then encrypt your secrets with AES-GCM before syncing.
               </p>
-              <div className={`code-block rounded-xl p-5 font-mono text-sm space-y-2 glow-code transition-all duration-700 ease-out delay-200 motion-reduce:transition-none motion-reduce:!opacity-100 motion-reduce:!translate-y-0 ${encryptionInView ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"}`}>
+              <div className={`code-block rounded-xl p-5 font-mono text-sm glow-code transition-all duration-700 ease-out delay-200 motion-reduce:transition-none motion-reduce:!opacity-100 motion-reduce:!translate-y-0 ${encryptionInView ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"}`}>
                 <div className="flex items-center gap-2 mb-4">
                   <span className="h-3 w-3 rounded-full bg-red-500" />
                   <span className="h-3 w-3 rounded-full bg-yellow-500" />
                   <span className="h-3 w-3 rounded-full bg-green-500" />
                   <span className="text-muted-foreground text-xs ml-2">browser-crypto.ts</span>
                 </div>
-                <p><span className="text-accent">const</span> <span className="text-foreground">secret =</span> <span className="text-green-400">"sk_live_51Nx..."</span>;</p>
-                <p className="text-muted-foreground mt-3">// Encrypting locally via WebCrypto API</p>
-                <p><span className="text-accent">const</span> <span className="text-foreground">ciphertext =</span> <span className="text-purple-400">await</span> encrypt(secret, vaultKey);</p>
-                <p className="text-muted-foreground mt-3">// Payload sent to server</p>
-                <p><span className="text-foreground">{"{"}</span> <span className="text-green-400">"ciphertext"</span>: <span className="text-green-400">"U2FsdGVkX1+vxyz..."</span>, <span className="text-green-400">"iv"</span>: <span className="text-green-400">"a8f9d2..."</span> <span className="text-foreground">{"}"}</span></p>
+                {[
+                  <p key={0}><span className="text-accent">const</span> <span className="text-foreground">secret =</span> <span className="text-green-400">"sk_live_51Nx..."</span>;</p>,
+                  <p key={1} className="text-muted-foreground mt-3">// Encrypting locally via WebCrypto API</p>,
+                  <p key={2}><span className="text-accent">const</span> <span className="text-foreground">ciphertext =</span> <span className="text-purple-400">await</span> encrypt(secret, vaultKey);</p>,
+                  <p key={3} className="text-muted-foreground mt-3">// Payload sent to server</p>,
+                  <p key={4}><span className="text-foreground">{"{"}</span> <span className="text-green-400">"ciphertext"</span>: <span className="text-green-400">"U2FsdGVkX1+vxyz..."</span>, <span className="text-green-400">"iv"</span>: <span className="text-green-400">"a8f9d2..."</span> <span className="text-foreground">{"}"}</span></p>,
+                ].map((line, i) => (
+                  <div
+                    key={i}
+                    className={`transition-all duration-500 ease-out motion-reduce:!opacity-100 motion-reduce:!translate-y-0 motion-reduce:transition-none ${encryptionInView ? "opacity-100 translate-y-0" : "opacity-0 translate-y-6"}`}
+                    style={{ transitionDelay: `${400 + i * 150}ms` }}
+                  >
+                    {line}
+                  </div>
+                ))}
               </div>
             </div>
 
