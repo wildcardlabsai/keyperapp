@@ -229,7 +229,9 @@ const DeveloperToolsTab = ({ userId }: Props) => {
                     <div className="mt-1 ml-4 space-y-1">
                       <div><code className="bg-muted/50 px-1.5 py-0.5 rounded text-foreground">node keyper-cli.js list</code> — List all keys</div>
                       <div><code className="bg-muted/50 px-1.5 py-0.5 rounded text-foreground">node keyper-cli.js get "My API Key"</code> — Decrypt & show</div>
-                      <div><code className="bg-muted/50 px-1.5 py-0.5 rounded text-foreground">node keyper-cli.js copy "My API Key"</code> — Decrypt & copy</div>
+                      <div><code className="bg-muted/50 px-1.5 py-0.5 rounded text-foreground">node keyper-cli.js env list</code> — List projects</div>
+                      <div><code className="bg-muted/50 px-1.5 py-0.5 rounded text-foreground">node keyper-cli.js env pull --project "My App" --env local</code> — Print .env</div>
+                      <div><code className="bg-muted/50 px-1.5 py-0.5 rounded text-foreground">node keyper-cli.js env write --project "My App" --env production</code> — Write .env file</div>
                     </div>
                   </li>
                 </ol>
@@ -350,10 +352,31 @@ const DeveloperToolsTab = ({ userId }: Props) => {
                   </div>
                   <div>
                     <div className="flex items-center gap-2 mb-1">
+                      <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-accent/20 text-accent">GET</span>
+                      <code className="text-xs font-mono">/projects</code>
+                    </div>
+                    <p className="text-xs text-muted-foreground ml-12">List all projects. Auth: Bearer kpr_token or JWT</p>
+                  </div>
+                  <div>
+                    <div className="flex items-center gap-2 mb-1">
+                      <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-accent/20 text-accent">GET</span>
+                      <code className="text-xs font-mono">/projects/:id/environments</code>
+                    </div>
+                    <p className="text-xs text-muted-foreground ml-12">List environments for a project</p>
+                  </div>
+                  <div>
+                    <div className="flex items-center gap-2 mb-1">
+                      <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-accent/20 text-accent">GET</span>
+                      <code className="text-xs font-mono">/projects/:id/environments/:envId/variables</code>
+                    </div>
+                    <p className="text-xs text-muted-foreground ml-12">List encrypted variables for an environment</p>
+                  </div>
+                  <div>
+                    <div className="flex items-center gap-2 mb-1">
                       <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-primary/20 text-primary">POST</span>
                       <code className="text-xs font-mono">/generate-token</code>
                     </div>
-                    <p className="text-xs text-muted-foreground ml-12">Create a new API token. Auth: Bearer JWT (Supabase session)</p>
+                    <p className="text-xs text-muted-foreground ml-12">Create a new API token. Auth: Bearer JWT (session)</p>
                   </div>
                 </div>
               </div>

@@ -131,6 +131,79 @@ export type Database = {
         }
         Relationships: []
       }
+      environment_variables: {
+        Row: {
+          ciphertext: string
+          created_at: string
+          environment_id: string
+          id: string
+          iv: string
+          key_name: string
+          provider_hint: string | null
+          updated_at: string
+        }
+        Insert: {
+          ciphertext: string
+          created_at?: string
+          environment_id: string
+          id?: string
+          iv: string
+          key_name: string
+          provider_hint?: string | null
+          updated_at?: string
+        }
+        Update: {
+          ciphertext?: string
+          created_at?: string
+          environment_id?: string
+          id?: string
+          iv?: string
+          key_name?: string
+          provider_hint?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "environment_variables_environment_id_fkey"
+            columns: ["environment_id"]
+            isOneToOne: false
+            referencedRelation: "environments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      environments: {
+        Row: {
+          created_at: string
+          id: string
+          name: string
+          project_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          name: string
+          project_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          name?: string
+          project_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "environments_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           auto_lock_minutes: number
@@ -164,6 +237,33 @@ export type Database = {
           updated_at?: string
           user_id?: string
           vault_created?: boolean
+        }
+        Relationships: []
+      }
+      projects: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          name: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          name: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          name?: string
+          updated_at?: string
+          user_id?: string
         }
         Relationships: []
       }
@@ -361,6 +461,14 @@ export type Database = {
       }
       is_team_member: {
         Args: { _team_id: string; _user_id: string }
+        Returns: boolean
+      }
+      owns_environment: {
+        Args: { _environment_id: string; _user_id: string }
+        Returns: boolean
+      }
+      owns_project: {
+        Args: { _project_id: string; _user_id: string }
         Returns: boolean
       }
     }

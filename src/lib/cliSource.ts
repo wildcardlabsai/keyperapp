@@ -1,17 +1,19 @@
 export const getCliSource = (supabaseUrl: string) => `#!/usr/bin/env node
 /**
- * Keyper CLI — Securely access your encrypted API keys from the terminal.
+ * Keyper CLI — Securely access your encrypted API keys and .env files from the terminal.
  * 
  * Setup:
  *   1. Save this file as keyper-cli.js
- *   2. npm install -g node-fetch (Node 18+ has native fetch)
- *   3. Set your API token: export KEYPER_TOKEN="kpr_..."
- *   4. Run: node keyper-cli.js list
+ *   2. Set your API token: export KEYPER_TOKEN="kpr_..."
+ *   3. Run: node keyper-cli.js help
  *
  * Commands:
  *   list              — List all keys (names & services)
  *   get <name>        — Decrypt and display a key
  *   copy <name>       — Decrypt and copy a key to clipboard
+ *   env list          — List all projects
+ *   env pull --project <name> --env <environment>   — Print .env to stdout
+ *   env write --project <name> --env <environment>  — Write .env file to disk
  *
  * Your vault passphrase is prompted locally and never transmitted.
  */
@@ -27,6 +29,7 @@ if (!TOKEN) {
 
 const readline = require("readline");
 const crypto = require("crypto");
+const fs = require("fs");
 const { execSync } = require("child_process");
 
 function prompt(question, hidden = false) {
@@ -85,29 +88,66 @@ function decrypt(ciphertext, iv, key) {
   return decrypted;
 }
 
-async function fetchKeys() {
-  const res = await fetch(API_URL + "/keys", {
+async function apiFetch(path, method = "GET") {
+  const res = await fetch(API_URL + "/" + path, {
+    method,
     headers: { Authorization: "Bearer " + TOKEN },
   });
   if (!res.ok) {
     const err = await res.json().catch(() => ({}));
-    throw new Error(err.error || "Failed to fetch keys: " + res.status);
+    throw new Error(err.error || "Request failed: " + res.status);
   }
-  return (await res.json()).keys;
+  return res.json();
+}
+
+async function fetchKeys() {
+  return (await apiFetch("keys")).keys;
+}
+
+function parseArgs(args) {
+  const parsed = {};
+  for (let i = 0; i < args.length; i++) {
+    if (args[i].startsWith("--") && i + 1 < args.length) {
+      parsed[args[i].slice(2)] = args[i + 1];
+      i++;
+    }
+  }
+  return parsed;
+}
+
+async function getCredentials() {
+  const passphrase = await prompt("Vault passphrase: ", true);
+  const salt = await prompt("User ID (from dashboard): ");
+  return deriveKey(passphrase, salt);
 }
 
 async function main() {
-  const [,, command, ...args] = process.argv;
+  const [,, command, subcommand, ...args] = process.argv;
 
   if (!command || command === "help") {
     console.log(\`
   Keyper CLI
 
-  Commands:
+  Vault Commands:
     list              List all keys (name, service, environment)
     get <name>        Decrypt and display a specific key
     copy <name>       Decrypt and copy a key to clipboard
-    help              Show this help message
+
+  Environment Commands:
+    env list                                          List all projects
+    env pull --project <name> --env <environment>     Print .env to stdout
+    env write --project <name> --env <environment>    Write .env file
+    env print --project <name> --env <environment>    Same as pull
+
+  Options:
+    --out <filename>  Output filename for env write (default: .env or .env.<env>)
+
+  Examples:
+    node keyper-cli.js list
+    node keyper-cli.js env list
+    node keyper-cli.js env pull --project "AI SaaS" --env local
+    node keyper-cli.js env write --project "AI SaaS" --env production
+    node keyper-cli.js env write --project "AI SaaS" --env staging --out .env.staging
 \`);
     return;
   }
@@ -128,20 +168,14 @@ async function main() {
   }
 
   if (command === "get" || command === "copy") {
-    const name = args.join(" ");
+    const name = [subcommand, ...args].join(" ");
     if (!name) { console.error("Usage: keyper " + command + " <key-name>"); process.exit(1); }
 
     const keys = await fetchKeys();
     const key = keys.find((k) => k.name.toLowerCase() === name.toLowerCase());
     if (!key) { console.error("Key not found: " + name); process.exit(1); }
 
-    const passphrase = await prompt("Vault passphrase: ", true);
-    
-    // We need the user_id as salt — derive from the token's associated user
-    // The salt is the user's ID which they need to provide
-    const salt = await prompt("User ID (from dashboard): ");
-    
-    const derivedKey = await deriveKey(passphrase, salt);
+    const derivedKey = await getCredentials();
     
     try {
       const plaintext = decrypt(key.encrypted_key, key.iv, derivedKey);
@@ -164,6 +198,86 @@ async function main() {
       process.exit(1);
     }
     return;
+  }
+
+  // ===== ENV COMMANDS =====
+  if (command === "env") {
+    if (!subcommand || subcommand === "help") {
+      console.log(\`
+  Environment Commands:
+    env list                                          List all projects
+    env pull --project <name> --env <environment>     Print .env to stdout
+    env write --project <name> --env <environment>    Write .env file
+\`);
+      return;
+    }
+
+    if (subcommand === "list") {
+      const { projects } = await apiFetch("projects");
+      if (!projects || projects.length === 0) {
+        console.log("No projects found. Create one in the dashboard.");
+        return;
+      }
+      console.log("\\n  Your Projects:\\n");
+      for (const p of projects) {
+        const { environments } = await apiFetch("projects/" + p.id + "/environments");
+        const envNames = environments ? environments.map((e) => e.name).join(", ") : "none";
+        console.log(\`  • \${p.name} — Environments: \${envNames}\`);
+      }
+      console.log();
+      return;
+    }
+
+    if (subcommand === "pull" || subcommand === "print" || subcommand === "write") {
+      const opts = parseArgs(args);
+      if (!opts.project || !opts.env) {
+        console.error("Usage: keyper env " + subcommand + " --project <name> --env <environment>");
+        process.exit(1);
+      }
+
+      // Find project by name
+      const { projects } = await apiFetch("projects");
+      const project = projects.find((p) => p.name.toLowerCase() === opts.project.toLowerCase());
+      if (!project) { console.error("Project not found: " + opts.project); process.exit(1); }
+
+      // Find environment
+      const { environments } = await apiFetch("projects/" + project.id + "/environments");
+      const env = environments.find((e) => e.name.toLowerCase() === opts.env.toLowerCase());
+      if (!env) { console.error("Environment not found: " + opts.env); process.exit(1); }
+
+      // Get variables
+      const { variables } = await apiFetch("projects/" + project.id + "/environments/" + env.id + "/variables");
+      if (!variables || variables.length === 0) {
+        console.log("No variables in " + opts.project + "/" + opts.env);
+        return;
+      }
+
+      // Decrypt
+      const derivedKey = await getCredentials();
+      const lines = [];
+      for (const v of variables) {
+        try {
+          const plain = decrypt(v.ciphertext, v.iv, derivedKey);
+          lines.push(v.key_name + "=" + plain);
+        } catch {
+          lines.push("# " + v.key_name + "=DECRYPTION_FAILED");
+        }
+      }
+
+      const content = lines.join("\\n") + "\\n";
+
+      if (subcommand === "write") {
+        const filename = opts.out || (opts.env === "production" ? ".env.production" : opts.env === "staging" ? ".env.staging" : ".env");
+        fs.writeFileSync(filename, content);
+        console.log("✅ " + filename + " generated successfully (" + variables.length + " variables)");
+      } else {
+        console.log(content);
+      }
+      return;
+    }
+
+    console.error("Unknown env command: " + subcommand);
+    process.exit(1);
   }
 
   console.error("Unknown command: " + command + ". Run 'keyper help' for usage.");

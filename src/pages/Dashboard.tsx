@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import {
   Shield, Key, Settings, CreditCard, Activity, LogOut, Lock, Plus, Eye, EyeOff,
   Copy, Trash2, Search, Edit, Download, Upload, Clock, Check, LayoutDashboard,
-  AlertTriangle, Unlock, MessageSquare, Users, Code2
+  AlertTriangle, Unlock, MessageSquare, Users, Code2, FileCode
 } from "lucide-react";
 import keyperIcon from "@/assets/keyper-icon.png";
 import keyperLogo from "@/assets/keyper-logo.png";
@@ -20,10 +20,11 @@ import { supabase } from "@/integrations/supabase/client";
 import TwoFactorSetup from "@/components/dashboard/TwoFactorSetup";
 import SupportTab from "@/components/dashboard/SupportTab";
 import DeveloperToolsTab from "@/components/dashboard/DeveloperToolsTab";
+import EnvironmentGeneratorTab from "@/components/dashboard/EnvironmentGeneratorTab";
 import { useToast } from "@/hooks/use-toast";
 import { deriveKey, encrypt, decrypt } from "@/lib/crypto";
 
-type Tab = "overview" | "keys" | "teams" | "devtools" | "settings" | "billing" | "security" | "support";
+type Tab = "overview" | "keys" | "teams" | "devtools" | "envgen" | "settings" | "billing" | "security" | "support";
 type ActivityEntry = { action: string; time: string };
 
 const formatDate = (d: string) => {
@@ -65,6 +66,7 @@ const expiryBadge = (expiresAt: string | null | undefined) => {
 const sidebarItems: { id: Tab; label: string; icon: typeof Key }[] = [
   { id: "overview", label: "Overview", icon: LayoutDashboard },
   { id: "keys", label: "API Keys", icon: Key },
+  { id: "envgen", label: "Environments", icon: FileCode },
   { id: "teams", label: "Teams", icon: Users },
   { id: "devtools", label: "Developer Tools", icon: Code2 },
   { id: "support", label: "Support", icon: MessageSquare },
@@ -804,6 +806,8 @@ const Dashboard = () => {
         {tab === "teams" && <TeamsTab userId={userId} onSelectTeam={(teamId) => navigate(`/team/${teamId}`)} />}
         {/* Developer Tools */}
         {tab === "devtools" && <DeveloperToolsTab userId={userId} />}
+        {/* Environment Generator */}
+        {tab === "envgen" && <EnvironmentGeneratorTab userId={userId} cryptoKey={cryptoKeyRef.current} />}
         {/* Support */}
         {tab === "support" && <SupportTab userEmail={userEmail} userId={userId} />}
       </main>
