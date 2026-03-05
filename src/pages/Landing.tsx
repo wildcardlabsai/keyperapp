@@ -61,13 +61,24 @@ const MetricCard = ({ target, suffix, label, icon: Icon, delay, displayFn }: {
 const Landing = () => {
   const scrollRef = useScrollAnimation();
   const { ref: encryptionRef, isInView: encryptionInView } = useInView<HTMLDivElement>();
-  const { ref: heroRef, isInView: heroInView } = useInView<HTMLElement>({ threshold: 0.1 });
+  const [heroMounted, setHeroMounted] = useState(false);
+
+  useEffect(() => {
+    const mq = window.matchMedia("(prefers-reduced-motion: reduce)");
+    if (mq.matches) {
+      setHeroMounted(true);
+    } else {
+      const t = setTimeout(() => setHeroMounted(true), 50);
+      return () => clearTimeout(t);
+    }
+  }, []);
+
   return (
     <div className="min-h-screen bg-background page-grid" ref={scrollRef}>
       <Navbar />
 
       {/* Hero */}
-      <section ref={heroRef} className="relative pt-32 pb-20 lg:pt-36 lg:pb-28 px-6 overflow-hidden">
+      <section className="relative pt-32 pb-20 lg:pt-36 lg:pb-28 px-6 overflow-hidden">
         <div className="absolute inset-0 section-glow-top" />
         <div className="relative mx-auto max-w-7xl grid grid-cols-1 lg:grid-cols-2 gap-10 lg:gap-14 items-center">
           {/* Left column */}
