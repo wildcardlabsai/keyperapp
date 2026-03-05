@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
 import { Shield, Lock, EyeOff, ArrowRight, Key, Code, Tag, Download, Users, Database, ShieldCheck, Globe, Check } from "lucide-react";
+import RotatingWord from "@/components/landing/RotatingWord";
 import { Button } from "@/components/ui/button";
 import Navbar from "@/components/landing/Navbar";
 import Footer from "@/components/landing/Footer";
@@ -85,8 +86,8 @@ const Landing = () => {
               className={`text-4xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight mb-6 leading-[1.1] text-foreground transition-all duration-700 ease-[cubic-bezier(.21,1.02,.73,1)] motion-reduce:!opacity-100 motion-reduce:!translate-y-0 motion-reduce:transition-none ${heroMounted ? "opacity-100 translate-y-0" : "opacity-0 translate-y-6"}`}
               style={{ transitionDelay: "0ms" }}
             >
-              The API Key Manager You Can{" "}
-              <span className="text-gradient">Actually Trust.</span>
+              The API Key Manager You Can Actually{" "}
+              <RotatingWord />
             </h1>
             <p
               className={`text-lg md:text-xl text-muted-foreground max-w-xl mb-8 leading-relaxed transition-all duration-700 ease-[cubic-bezier(.21,1.02,.73,1)] motion-reduce:!opacity-100 motion-reduce:!translate-y-0 motion-reduce:transition-none ${heroMounted ? "opacity-100 translate-y-0" : "opacity-0 translate-y-6"}`}
