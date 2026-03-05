@@ -109,8 +109,8 @@ const Landing = () => {
             </div>
             {/* Trust bullets */}
             <div
-              className={`flex flex-col sm:flex-row sm:flex-wrap gap-x-6 gap-y-2 transition-all duration-700 ease-[cubic-bezier(.21,1.02,.73,1)] motion-reduce:!opacity-100 motion-reduce:!translate-y-0 motion-reduce:transition-none ${heroInView ? "opacity-100 translate-y-0" : "opacity-0 translate-y-6"}`}
-              style={{ transitionDelay: "400ms" }}
+              className={`flex flex-col sm:flex-row sm:flex-wrap gap-x-6 gap-y-2 transition-all duration-700 ease-[cubic-bezier(.21,1.02,.73,1)] motion-reduce:!opacity-100 motion-reduce:!translate-y-0 motion-reduce:transition-none ${heroMounted ? "opacity-100 translate-y-0" : "opacity-0 translate-y-6"}`}
+              style={{ transitionDelay: "360ms" }}
             >
               {["AES-GCM end-to-end encryption", "Developer CLI", "Scoped API tokens"].map((text) => (
                 <span key={text} className="inline-flex items-center gap-1.5 text-sm text-muted-foreground">
