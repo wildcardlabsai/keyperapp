@@ -19,6 +19,7 @@ import TeamsTab from "@/components/dashboard/TeamsTab";
 import { supabase } from "@/integrations/supabase/client";
 import TwoFactorSetup from "@/components/dashboard/TwoFactorSetup";
 import SupportTab from "@/components/dashboard/SupportTab";
+import DeveloperToolsTab from "@/components/dashboard/DeveloperToolsTab";
 import { useToast } from "@/hooks/use-toast";
 import { deriveKey, encrypt, decrypt } from "@/lib/crypto";
 
