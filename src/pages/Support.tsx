@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Search, ChevronRight, ArrowLeft, Send, BookOpen, MessageSquare } from "lucide-react";
+import { Search, ChevronRight, ArrowLeft, Send, BookOpen, MessageSquare, Phone } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
