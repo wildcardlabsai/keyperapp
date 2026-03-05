@@ -123,7 +123,7 @@ const Landing = () => {
 
           {/* Right column — screenshot */}
           <div className="w-full">
-            <HeroScreenshot visible={heroInView} />
+            <HeroScreenshot visible={heroMounted} />
           </div>
         </div>
       </section>
