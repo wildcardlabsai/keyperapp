@@ -1,49 +1,103 @@
 
 
-## Issues and Fixes
+## Feature Plan: 4 New Features for Keyper
 
-### 1. Passphrase Validation (Security Bug)
+### 1. Team/Organization Vaults (Shared Keys)
 
-**Problem:** The `unlockVault` function in `Dashboard.tsx` (line 341) derives a key from whatever the user types and immediately sets `locked = false`. It never verifies the passphrase is correct. Any input is accepted, and wrong passphrases only surface later as silent decryption failures.
+**Concept**: Users can create "teams," invite members by email, and share encrypted API keys within a shared vault. Each team has roles: owner, editor, viewer.
 
-**Root cause:** There is no verification token stored during vault creation to validate against during unlock.
+**Database changes**:
+- `teams` table: id, name, created_by (user_id), created_at
+- `team_members` table: id, team_id, user_id, role (owner/editor/viewer), invited_at, accepted
+- `team_keys` table: same structure as `api_keys` but with `team_id` instead of `user_id`, plus `added_by`
+- RLS policies ensuring only team members can access team keys, owners can manage members
 
-**Fix — store and check a verification ciphertext:**
+**New files**:
+- `src/pages/TeamDashboard.tsx` -- team vault view
+- `src/components/dashboard/TeamsTab.tsx` -- list of teams in user dashboard sidebar
+- `src/components/dashboard/InviteMemberDialog.tsx` -- invite modal
+- `supabase/functions/invite-team-member/index.ts` -- sends invite, creates pending record
 
-- **Database migration:** Add two columns to `profiles`:
-  - `vault_verify_ciphertext text` (nullable)
-  - `vault_verify_iv text` (nullable)
+**Modified files**:
+- `src/pages/Dashboard.tsx` -- add "Teams" tab to sidebar
+- `src/App.tsx` -- add `/team/:id` route
 
-- **Vault creation (`createVault`):** After deriving the key, encrypt a known plaintext string (e.g. `"KEYPER_VAULT_OK"`) and store the resulting ciphertext + IV in the profile alongside `vault_created = true`.
+**Encryption consideration**: Team keys would need a shared encryption approach. Options:
+- Each team has its own passphrase that members must know
+- Or keys are re-encrypted per-member using their individual vault key (more complex but more secure)
 
-- **Vault unlock (`unlockVault`):** After deriving the key, fetch the stored verification ciphertext/IV from the profile and attempt to decrypt it. If decryption fails (throws), show a "Wrong passphrase" error and do NOT unlock. If it succeeds and matches the expected plaintext, proceed with unlock.
+I recommend the **team passphrase** approach for simplicity -- team owners set it, share it out-of-band with members.
 
-- **Same fix applied to `TeamDashboard.tsx`** `unlockTeam` function — encrypt a verification token when the team is first set up, and validate on unlock. (Requires adding `vault_verify_ciphertext` and `vault_verify_iv` columns to the `teams` table as well.)
+---
 
-### 2. Landing Page Performance
+### 2. API Key Expiry & Rotation Alerts
 
-**Problem:** The page feels sluggish due to multiple overlapping animation systems and heavy component imports.
+**Concept**: Users can optionally set an expiration date when adding/editing a key. The dashboard shows warnings for keys expiring within 7 days. A scheduled function checks daily and could send email alerts.
 
-**Fixes:**
+**Database changes**:
+- Add `expires_at` (timestamp, nullable) column to `api_keys` table
 
-- **Lazy-load below-fold sections:** Use `React.lazy` + `Suspense` for `Testimonials`, `PricingTeaser`, `TrustedBy`, and `MobileCTA` so they don't block initial render.
+**Modified files**:
+- `src/components/dashboard/AddKeyDialog.tsx` -- add optional date picker for expiry
+- `src/pages/Dashboard.tsx`:
+  - Overview tab shows "Expiring Soon" warning cards for keys within 7 days
+  - Keys list shows expiry badges (green/yellow/red)
+- `supabase/functions/check-expiring-keys/index.ts` -- daily cron function that queries keys expiring in 7 days (optional email notification)
 
-- **Reduce IntersectionObserver count:** The `useCountUp` hook creates one observer per `MetricCard` (4 total), plus `useScrollAnimation` observes every `.animate-on-scroll` element, plus `useInView` for the encryption card. Consolidate: wrap the metrics section in a single `useInView` and trigger all counters together instead of 4 separate observers.
+**UI indicators**:
+- Green badge: >30 days or no expiry
+- Yellow badge: 7-30 days
+- Red badge: <7 days or expired
 
-- **Add `will-change: transform` to the `.grid-drift` animation** in CSS to promote it to its own compositor layer and avoid paint overhead.
+---
 
-- **Use `content-visibility: auto`** on below-fold sections (features, how-it-works, testimonials, CTA) to skip rendering until they approach the viewport.
+### 3. Changelog / What's New Page
 
-- **Defer the ChatWidget mount** with a `setTimeout` or `requestIdleCallback` so it doesn't compete with initial paint.
+**Concept**: A public `/changelog` page showing product updates in a clean timeline format. Entries are hardcoded initially but could later be managed from the admin panel.
 
-### Summary of Changes
+**New files**:
+- `src/pages/Changelog.tsx` -- timeline-style page with version entries
+- `src/lib/changelogData.ts` -- array of changelog entries (date, version, title, description, tags like "feature", "fix", "improvement")
 
-| File | Change |
-|------|--------|
-| DB migration | Add `vault_verify_ciphertext`, `vault_verify_iv` to `profiles` and `teams` |
-| `src/pages/Dashboard.tsx` | Store verification token on create, validate on unlock |
-| `src/pages/TeamDashboard.tsx` | Same verification pattern for team vaults |
-| `src/pages/Landing.tsx` | Lazy-load heavy components, consolidate observers |
-| `src/index.css` | Add `will-change: transform` to `.grid-drift`, add `content-visibility: auto` utility |
-| `src/App.tsx` | Defer `ChatWidget` mount |
+**Modified files**:
+- `src/App.tsx` -- add `/changelog` route
+- `src/components/landing/Navbar.tsx` -- add "Changelog" link
+- `src/components/landing/Footer.tsx` -- add "Changelog" link
+
+**Design**: Clean vertical timeline with date markers, version badges, and categorized entries. Could include a "New" badge in the navbar when there are recent updates.
+
+---
+
+### 4. Onboarding Tour & Empty States
+
+**Concept**: First-time users get a step-by-step guided tour highlighting key features. Empty states show helpful illustrations and CTAs instead of blank screens.
+
+**Implementation approach**:
+- Track onboarding completion in `profiles` table (`onboarding_completed` boolean column)
+- Use a lightweight tooltip/spotlight overlay (custom built, no heavy library)
+- Tour steps: (1) Welcome, (2) "Add your first key" button, (3) Sidebar navigation, (4) Security settings
+
+**Database changes**:
+- Add `onboarding_completed` (boolean, default false) to `profiles` table
+
+**New files**:
+- `src/components/dashboard/OnboardingTour.tsx` -- overlay component with step-by-step tooltips
+- `src/components/dashboard/EmptyState.tsx` -- reusable empty state component with illustration, title, description, CTA
+
+**Modified files**:
+- `src/pages/Dashboard.tsx` -- render OnboardingTour on first login, use EmptyState when no keys exist
+
+**Empty state designs for**:
+- No API keys yet: "Your vault is empty" with illustration + "Add your first key" button
+- No activity log entries: "No activity yet"
+- No support tickets: "All clear! No tickets."
+
+---
+
+### Suggested Implementation Order
+
+1. **Onboarding tour & empty states** -- quick win, improves UX immediately
+2. **API key expiry & rotation alerts** -- single table change, high practical value
+3. **Changelog page** -- static content, quick to build
+4. **Team vaults** -- most complex, involves shared encryption design
 

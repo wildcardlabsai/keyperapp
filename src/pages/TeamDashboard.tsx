@@ -113,16 +113,33 @@ const TeamDashboard = () => {
     }
   }, [locked, loadKeys, loadMembers]);
 
+  const VAULT_VERIFY_PLAINTEXT = "KEYPER_VAULT_OK";
+
   const unlockTeam = async () => {
     if (!teamId) return;
     try {
       const derived = await deriveKey(passphrase, teamId);
+      // Fetch verification token from team
+      const { data: teamData } = await supabase
+        .from("teams")
+        .select("vault_verify_ciphertext, vault_verify_iv")
+        .eq("id", teamId)
+        .single();
+      const vc = (teamData as any)?.vault_verify_ciphertext;
+      const vi = (teamData as any)?.vault_verify_iv;
+      if (vc && vi) {
+        const plain = await decrypt(vc, vi, derived);
+        if (plain !== VAULT_VERIFY_PLAINTEXT) {
+          toast({ variant: "destructive", title: "Wrong passphrase", description: "The team passphrase is incorrect." });
+          return;
+        }
+      }
       cryptoKeyRef.current = derived;
       setLocked(false);
       setPassphrase("");
       toast({ title: "Team vault unlocked" });
     } catch {
-      toast({ variant: "destructive", title: "Failed to unlock" });
+      toast({ variant: "destructive", title: "Wrong passphrase", description: "The team passphrase is incorrect." });
     }
   };
 

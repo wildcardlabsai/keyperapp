@@ -323,6 +323,8 @@ const Dashboard = () => {
     loadKeys();
   };
 
+  const VAULT_VERIFY_PLAINTEXT = "KEYPER_VAULT_OK";
+
   const createVault = async () => {
     if (vaultInput.length < 6) {
       toast({ variant: "destructive", title: "Passphrase too short", description: "Must be at least 6 characters." });
@@ -330,7 +332,12 @@ const Dashboard = () => {
     }
     const derived = await deriveKey(vaultInput, userId);
     cryptoKeyRef.current = derived;
-    await supabase.from("profiles").update({ vault_created: true }).eq("user_id", userId);
+    const verification = await encrypt(VAULT_VERIFY_PLAINTEXT, derived);
+    await supabase.from("profiles").update({
+      vault_created: true,
+      vault_verify_ciphertext: verification.ciphertext,
+      vault_verify_iv: verification.iv,
+    } as any).eq("user_id", userId);
     setHasVault(true);
     setLocked(false);
     addLog("Vault created");
@@ -341,13 +348,28 @@ const Dashboard = () => {
   const unlockVault = async () => {
     try {
       const derived = await deriveKey(vaultInput, userId);
+      // Fetch verification token from profile
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("vault_verify_ciphertext, vault_verify_iv")
+        .eq("user_id", userId)
+        .single();
+      const vc = (profile as any)?.vault_verify_ciphertext;
+      const vi = (profile as any)?.vault_verify_iv;
+      if (vc && vi) {
+        const plain = await decrypt(vc, vi, derived);
+        if (plain !== VAULT_VERIFY_PLAINTEXT) {
+          toast({ variant: "destructive", title: "Wrong passphrase", description: "The passphrase you entered is incorrect." });
+          return;
+        }
+      }
       cryptoKeyRef.current = derived;
       setLocked(false);
       addLog("Vault unlocked");
       toast({ title: "Vault unlocked" });
       setVaultInput("");
     } catch {
-      toast({ variant: "destructive", title: "Failed to derive key" });
+      toast({ variant: "destructive", title: "Wrong passphrase", description: "The passphrase you entered is incorrect." });
     }
   };
 

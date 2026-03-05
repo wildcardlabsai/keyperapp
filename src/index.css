@@ -186,6 +186,11 @@
   }
   .grid-drift {
     animation: gridDrift 40s linear infinite;
+    will-change: transform;
+  }
+  .content-auto {
+    content-visibility: auto;
+    contain-intrinsic-size: auto 500px;
   }
   @media (prefers-reduced-motion: reduce) {
     .grid-drift {
