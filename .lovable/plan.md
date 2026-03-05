@@ -1,103 +1,99 @@
 
 
-## Feature Plan: 4 New Features for Keyper
+## Plan: Developer Tools — API Endpoint, CLI & Browser Extension
 
-### 1. Team/Organization Vaults (Shared Keys)
+### Overview
 
-**Concept**: Users can create "teams," invite members by email, and share encrypted API keys within a shared vault. Each team has roles: owner, editor, viewer.
+Build a complete developer tools integration for Keyper: a secure API endpoint for programmatic access to encrypted vault keys, a Node.js CLI tool, and a Chrome browser extension. Since Lovable builds web apps, the CLI and extension code will be generated and presented on a new **Developer Tools** page in the dashboard where users can download/copy the code.
 
-**Database changes**:
-- `teams` table: id, name, created_by (user_id), created_at
-- `team_members` table: id, team_id, user_id, role (owner/editor/viewer), invited_at, accepted
-- `team_keys` table: same structure as `api_keys` but with `team_id` instead of `user_id`, plus `added_by`
-- RLS policies ensuring only team members can access team keys, owners can manage members
+### Important Constraint
 
-**New files**:
-- `src/pages/TeamDashboard.tsx` -- team vault view
-- `src/components/dashboard/TeamsTab.tsx` -- list of teams in user dashboard sidebar
-- `src/components/dashboard/InviteMemberDialog.tsx` -- invite modal
-- `supabase/functions/invite-team-member/index.ts` -- sends invite, creates pending record
+The CLI and browser extension are external tools that run outside the web app. Lovable will:
+1. Build the **backend API** (edge function) that authenticates requests and returns encrypted keys
+2. Create a **Developer Tools tab** in the dashboard with setup instructions, downloadable code, and an API token management system
+3. Generate the **CLI source code** and **extension source code** as copyable/downloadable artifacts
 
-**Modified files**:
-- `src/pages/Dashboard.tsx` -- add "Teams" tab to sidebar
-- `src/App.tsx` -- add `/team/:id` route
-
-**Encryption consideration**: Team keys would need a shared encryption approach. Options:
-- Each team has its own passphrase that members must know
-- Or keys are re-encrypted per-member using their individual vault key (more complex but more secure)
-
-I recommend the **team passphrase** approach for simplicity -- team owners set it, share it out-of-band with members.
+Users will still need to decrypt keys locally using their vault passphrase (maintaining zero-knowledge architecture).
 
 ---
 
-### 2. API Key Expiry & Rotation Alerts
+### 1. Database Changes
 
-**Concept**: Users can optionally set an expiration date when adding/editing a key. The dashboard shows warnings for keys expiring within 7 days. A scheduled function checks daily and could send email alerts.
+**New table: `api_tokens`** — personal access tokens for CLI/extension authentication
 
-**Database changes**:
-- Add `expires_at` (timestamp, nullable) column to `api_keys` table
+| Column | Type | Notes |
+|--------|------|-------|
+| id | uuid | PK |
+| user_id | uuid | FK to auth.users |
+| name | text | e.g. "My CLI", "Work Extension" |
+| token_hash | text | SHA-256 hash of the token (never store plaintext) |
+| last_used_at | timestamp | nullable |
+| expires_at | timestamp | nullable |
+| created_at | timestamp | default now() |
 
-**Modified files**:
-- `src/components/dashboard/AddKeyDialog.tsx` -- add optional date picker for expiry
-- `src/pages/Dashboard.tsx`:
-  - Overview tab shows "Expiring Soon" warning cards for keys within 7 days
-  - Keys list shows expiry badges (green/yellow/red)
-- `supabase/functions/check-expiring-keys/index.ts` -- daily cron function that queries keys expiring in 7 days (optional email notification)
-
-**UI indicators**:
-- Green badge: >30 days or no expiry
-- Yellow badge: 7-30 days
-- Red badge: <7 days or expired
+RLS: users can only CRUD their own tokens.
 
 ---
 
-### 3. Changelog / What's New Page
+### 2. Edge Function: `vault-api`
 
-**Concept**: A public `/changelog` page showing product updates in a clean timeline format. Entries are hardcoded initially but could later be managed from the admin panel.
+A single edge function at `supabase/functions/vault-api/index.ts` that handles:
 
-**New files**:
-- `src/pages/Changelog.tsx` -- timeline-style page with version entries
-- `src/lib/changelogData.ts` -- array of changelog entries (date, version, title, description, tags like "feature", "fix", "improvement")
+- **`POST /generate-token`** — authenticated via Supabase JWT, creates a new API token, returns it once (plaintext), stores only the hash
+- **`GET /keys`** — authenticated via API token (Bearer header), returns the user's encrypted keys (ciphertext + IV)
+- **`GET /keys/:id`** — returns a single encrypted key by ID
 
-**Modified files**:
-- `src/App.tsx` -- add `/changelog` route
-- `src/components/landing/Navbar.tsx` -- add "Changelog" link
-- `src/components/landing/Footer.tsx` -- add "Changelog" link
-
-**Design**: Clean vertical timeline with date markers, version badges, and categorized entries. Could include a "New" badge in the navbar when there are recent updates.
+The response contains encrypted data only. Decryption happens client-side (CLI/extension) using the user's vault passphrase, preserving zero-knowledge.
 
 ---
 
-### 4. Onboarding Tour & Empty States
+### 3. Dashboard: Developer Tools Tab
 
-**Concept**: First-time users get a step-by-step guided tour highlighting key features. Empty states show helpful illustrations and CTAs instead of blank screens.
-
-**Implementation approach**:
-- Track onboarding completion in `profiles` table (`onboarding_completed` boolean column)
-- Use a lightweight tooltip/spotlight overlay (custom built, no heavy library)
-- Tour steps: (1) Welcome, (2) "Add your first key" button, (3) Sidebar navigation, (4) Security settings
-
-**Database changes**:
-- Add `onboarding_completed` (boolean, default false) to `profiles` table
-
-**New files**:
-- `src/components/dashboard/OnboardingTour.tsx` -- overlay component with step-by-step tooltips
-- `src/components/dashboard/EmptyState.tsx` -- reusable empty state component with illustration, title, description, CTA
-
-**Modified files**:
-- `src/pages/Dashboard.tsx` -- render OnboardingTour on first login, use EmptyState when no keys exist
-
-**Empty state designs for**:
-- No API keys yet: "Your vault is empty" with illustration + "Add your first key" button
-- No activity log entries: "No activity yet"
-- No support tickets: "All clear! No tickets."
+New tab in the sidebar with:
+- **API Tokens section** — create, view, revoke personal access tokens
+- **CLI Setup** — copyable install command and usage instructions
+- **Browser Extension** — download link and setup guide
+- API documentation showing endpoints and response format
 
 ---
 
-### Suggested Implementation Order
+### 4. CLI Tool (generated code)
 
-1. **Onboarding tour & empty states** -- quick win, improves UX immediately
-2. **API key expiry & rotation alerts** -- single table change, high practical value
-3. **Changelog page** -- static content, quick to build
-4. **Team vaults** -- most complex, involves shared encryption design
+A self-contained Node.js script (`keyper-cli.js`) users copy from the dashboard:
+- Authenticates with API token
+- Fetches encrypted keys from the vault-api endpoint
+- Prompts for vault passphrase locally
+- Decrypts and displays/copies keys
+- Commands: `keyper list`, `keyper get <name>`, `keyper copy <name>`
+
+---
+
+### 5. Browser Extension (generated code)
+
+A Chrome extension (manifest v3) with:
+- Popup UI to enter API token and vault passphrase (stored in extension local storage)
+- Lists keys from the vault
+- "Copy" button to copy decrypted key to clipboard
+- Context menu to autofill key values into form fields
+
+---
+
+### Files to Create/Modify
+
+| Action | File | Purpose |
+|--------|------|---------|
+| Create | `supabase/functions/vault-api/index.ts` | API endpoint |
+| Create | `src/components/dashboard/DeveloperToolsTab.tsx` | Dashboard tab UI |
+| Create | `src/lib/cliSource.ts` | CLI source code as string constant |
+| Create | `src/lib/extensionSource.ts` | Extension source files as string constants |
+| Modify | `src/pages/Dashboard.tsx` | Add "Developer Tools" tab to sidebar |
+| Migration | `api_tokens` table + RLS | Database schema |
+
+### Implementation Order
+
+1. Database migration for `api_tokens` table
+2. `vault-api` edge function
+3. `DeveloperToolsTab` component with token management
+4. CLI and extension source code generation
+5. Wire into dashboard sidebar
 
