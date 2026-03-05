@@ -11,7 +11,7 @@ export const changelogEntries: ChangelogEntry[] = [
     version: "1.6.0",
     date: "2026-03-05",
     title: "Environment Generator (.env Generator)",
-    description: "Organize secrets into Projects, Environments, and Variables. Generate ready-to-use .env files, Docker Compose snippets, and GitHub Actions configs — all encrypted end-to-end. Available in the Web UI, CLI, and browser extension.",
+    description: "Organize secrets into Projects, Environments, and Variables. Generate ready-to-use .env files, Docker Compose snippets, and GitHub Actions configs — all encrypted end-to-end. Available in the Web UI, CLI (keyper env pull/write), and Chrome extension.",
     tags: ["feature", "security"],
   },
   {
