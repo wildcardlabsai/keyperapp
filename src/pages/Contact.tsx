@@ -1,9 +1,10 @@
 import { useState } from "react";
-import { Mail, Send } from "lucide-react";
+import { Mail, Send, Phone } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 import Navbar from "@/components/landing/Navbar";
 import Footer from "@/components/landing/Footer";
 
@@ -14,15 +15,28 @@ const Contact = () => {
   const [sending, setSending] = useState(false);
   const { toast } = useToast();
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!name.trim() || !email.trim() || !message.trim()) return;
     setSending(true);
-    setTimeout(() => {
-      toast({ title: "Message sent", description: "We'll get back to you as soon as possible." });
+
+    const { data: { session } } = await supabase.auth.getSession();
+
+    const { error } = await supabase.from("support_tickets").insert({
+      user_id: session?.user?.id || null,
+      name: name.trim(),
+      email: email.trim(),
+      subject: "Contact Form Inquiry",
+      message: message.trim(),
+    });
+
+    setSending(false);
+    if (error) {
+      toast({ variant: "destructive", title: "Failed to send", description: "Please try again later." });
+    } else {
+      toast({ title: "Message sent!", description: "We'll get back to you as soon as possible." });
       setName(""); setEmail(""); setMessage("");
-      setSending(false);
-    }, 1000);
+    }
   };
 
   return (
@@ -35,7 +49,11 @@ const Contact = () => {
               <Mail className="h-6 w-6 text-primary" />
             </div>
             <h1 className="text-4xl font-bold mb-3">Contact us</h1>
-            <p className="text-muted-foreground">Have a question or feedback? We'd love to hear from you.</p>
+            <p className="text-muted-foreground mb-2">Have a question or feedback? We'd love to hear from you.</p>
+            <p className="text-sm text-muted-foreground flex items-center justify-center gap-1.5">
+              <Phone className="h-3.5 w-3.5 text-primary" />
+              Call us: <a href="tel:+443300435658" className="text-primary hover:underline">+44 330 043 5658</a>
+            </p>
           </div>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>

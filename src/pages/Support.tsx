@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Search, ChevronRight, ArrowLeft, Send, BookOpen, MessageSquare } from "lucide-react";
+import { Search, ChevronRight, ArrowLeft, Send, BookOpen, MessageSquare, Phone } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -136,9 +136,13 @@ const Support = () => {
               <h2 className="text-xl font-semibold">Contact Us</h2>
             </div>
             <div className="rounded-xl border border-border/50 bg-card/40 p-6">
-              <p className="text-sm text-muted-foreground mb-6">
+              <p className="text-sm text-muted-foreground mb-4">
                 Can't find what you're looking for? Send us a message and we'll get back to you.
               </p>
+              <div className="flex items-center gap-2 mb-6 text-sm text-muted-foreground">
+                <Phone className="h-4 w-4 text-primary" />
+                <span>Call us: <a href="tel:+443300435658" className="text-primary hover:underline">+44 330 043 5658</a></span>
+              </div>
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div className="grid sm:grid-cols-2 gap-4">
                   <div>
