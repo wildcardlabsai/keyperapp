@@ -4,6 +4,7 @@ import {
   Shield, Key, Users, Plus, Eye, EyeOff, Copy, Trash2, Edit, ArrowLeft,
   Lock, UserPlus, AlertTriangle
 } from "lucide-react";
+import keyperIcon from "@/assets/keyper-icon.png";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import AddKeyDialog, { type ApiKeyData } from "@/components/dashboard/AddKeyDialog";

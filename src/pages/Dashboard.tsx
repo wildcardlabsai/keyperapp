@@ -5,6 +5,7 @@ import {
   Copy, Trash2, Search, Edit, Download, Upload, Clock, Check, LayoutDashboard,
   AlertTriangle, Unlock, MessageSquare, Users
 } from "lucide-react";
+import keyperIcon from "@/assets/keyper-icon.png";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
