@@ -512,9 +512,7 @@ const Dashboard = () => {
       {/* Sidebar */}
       <aside className="hidden md:flex w-64 flex-col border-r border-border/50 bg-sidebar p-4">
         <div className="flex items-center gap-2 mb-8 px-2">
-          <div className="h-8 w-8 rounded-lg bg-gradient-primary flex items-center justify-center">
-            <Shield className="h-4 w-4 text-primary-foreground" />
-          </div>
+          <img src={keyperIcon} alt="Keyper" className="h-8 w-8" />
           <span className="text-lg font-bold">Keyper</span>
         </div>
         <nav className="space-y-1 flex-1">
