@@ -124,4 +124,22 @@
     opacity: 1;
     transform: translateY(0);
   }
+
+  /* Payload pulse animation */
+  @keyframes payloadPulse {
+    0% { transform: translateX(0); opacity: 0; }
+    10% { opacity: 1; }
+    90% { opacity: 1; }
+    100% { transform: translateX(120px); opacity: 0; }
+  }
+  .payload-pulse {
+    animation: payloadPulse 2.5s linear infinite;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .payload-pulse {
+      animation: none;
+      opacity: 1;
+      transform: translateX(60px);
+    }
+  }
 }
