@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Link } from "react-router-dom";
 import { Menu, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import ThemeToggle from "@/components/ThemeToggle";
 import keyperLogo from "@/assets/keyper-logo.png";
 
 const navLinks = [
@@ -32,6 +33,7 @@ const Navbar = () => {
           </div>
 
           <div className="hidden md:flex items-center gap-1">
+            <ThemeToggle />
             <div className="h-6 w-px bg-border mx-3" />
             <Button variant="ghost" size="sm" asChild>
               <Link to="/login">Sign In</Link>

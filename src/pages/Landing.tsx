@@ -5,6 +5,9 @@ import { Button } from "@/components/ui/button";
 import Navbar from "@/components/landing/Navbar";
 import Footer from "@/components/landing/Footer";
 import HeroScreenshot from "@/components/landing/HeroScreenshot";
+import TrustedBy from "@/components/landing/TrustedBy";
+import PricingTeaser from "@/components/landing/PricingTeaser";
+import MobileCTA from "@/components/landing/MobileCTA";
 import { useScrollAnimation } from "@/hooks/useScrollAnimation";
 import { useInView } from "@/hooks/useInView";
 import { useEffect, useRef, useState } from "react";
@@ -130,6 +133,9 @@ const Landing = () => {
           </div>
         </div>
       </section>
+
+      {/* Trusted By */}
+      <TrustedBy />
 
       {/* Metrics */}
       <section className="py-16 px-4 border-y border-border/40">
@@ -297,6 +303,9 @@ const Landing = () => {
       {/* Testimonials */}
       <Testimonials />
 
+      {/* Pricing Teaser */}
+      <PricingTeaser />
+
       {/* CTA */}
       <section className="py-24 px-4 relative overflow-hidden">
         <div className="absolute inset-0 section-glow-top" />
@@ -313,6 +322,7 @@ const Landing = () => {
       </section>
 
       <Footer />
+      <MobileCTA />
     </div>
   );
 };
