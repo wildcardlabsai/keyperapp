@@ -5,6 +5,7 @@ import {
   Copy, Trash2, Search, Edit, Download, Upload, Clock, Check, LayoutDashboard,
   AlertTriangle, Unlock, MessageSquare, Users
 } from "lucide-react";
+import keyperIcon from "@/assets/keyper-icon.png";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -491,8 +492,8 @@ const Dashboard = () => {
     return (
       <div className="min-h-screen flex items-center justify-center px-4">
         <div className="w-full max-w-sm text-center">
-          <div className="h-16 w-16 rounded-2xl bg-secondary flex items-center justify-center mx-auto mb-6">
-            <Lock className="h-8 w-8 text-primary" />
+          <div className="h-16 w-16 rounded-2xl flex items-center justify-center mx-auto mb-6">
+            <img src={keyperIcon} alt="Keyper" className="h-14 w-14" />
           </div>
           <h1 className="text-2xl font-bold mb-2">Vault locked</h1>
           <p className="text-muted-foreground text-sm mb-6">Enter your passphrase to unlock.</p>
