@@ -62,7 +62,7 @@ const App = () => (
               <Route path="*" element={<NotFound />} />
             </Routes>
           </PageTransition>
-          <ChatWidget />
+          <Suspense fallback={null}><ChatWidget /></Suspense>
         </BrowserRouter>
       </TooltipProvider>
     </ThemeProvider>
