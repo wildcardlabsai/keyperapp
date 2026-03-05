@@ -1,9 +1,10 @@
 import { Link } from "react-router-dom";
-import { Shield, Lock, EyeOff, ArrowRight, Key, Code, Tag, Download, Users, Database, ShieldCheck, Globe } from "lucide-react";
+import { Shield, Lock, EyeOff, ArrowRight, Key, Code, Tag, Download, Users, Database, ShieldCheck, Globe, Check } from "lucide-react";
 import Testimonials from "@/components/landing/Testimonials";
 import { Button } from "@/components/ui/button";
 import Navbar from "@/components/landing/Navbar";
 import Footer from "@/components/landing/Footer";
+import HeroScreenshot from "@/components/landing/HeroScreenshot";
 import { useScrollAnimation } from "@/hooks/useScrollAnimation";
 import { useInView } from "@/hooks/useInView";
 import { useEffect, useRef, useState } from "react";
@@ -60,32 +61,64 @@ const MetricCard = ({ target, suffix, label, icon: Icon, delay, displayFn }: {
 const Landing = () => {
   const scrollRef = useScrollAnimation();
   const { ref: encryptionRef, isInView: encryptionInView } = useInView<HTMLDivElement>();
+  const { ref: heroRef, isInView: heroInView } = useInView<HTMLElement>({ threshold: 0.1 });
   return (
     <div className="min-h-screen bg-background page-grid" ref={scrollRef}>
       <Navbar />
 
       {/* Hero */}
-      <section className="relative pt-32 pb-24 px-4 overflow-hidden">
+      <section ref={heroRef} className="relative pt-32 pb-20 lg:pt-36 lg:pb-28 px-6 overflow-hidden">
         <div className="absolute inset-0 section-glow-top" />
-        <div className="relative mx-auto max-w-4xl text-center">
-          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-border bg-secondary/50 text-sm text-accent mb-8 animate-on-scroll">
-            <span className="h-2 w-2 rounded-full bg-accent" />
-            Keyper v1.0 is now live
+        <div className="relative mx-auto max-w-7xl grid grid-cols-1 lg:grid-cols-2 gap-10 lg:gap-14 items-center">
+          {/* Left column */}
+          <div className="flex flex-col items-start">
+            <div
+              className={`inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-border bg-secondary/50 text-sm text-accent mb-8 transition-all duration-700 ease-[cubic-bezier(.21,1.02,.73,1)] motion-reduce:!opacity-100 motion-reduce:!translate-y-0 motion-reduce:transition-none ${heroInView ? "opacity-100 translate-y-0" : "opacity-0 translate-y-6"}`}
+            >
+              <span className="h-2 w-2 rounded-full bg-accent" />
+              Keyper v1.0 is now live
+            </div>
+            <h1
+              className={`text-4xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight mb-6 leading-[1.1] text-foreground transition-all duration-700 ease-[cubic-bezier(.21,1.02,.73,1)] motion-reduce:!opacity-100 motion-reduce:!translate-y-0 motion-reduce:transition-none ${heroInView ? "opacity-100 translate-y-0" : "opacity-0 translate-y-6"}`}
+              style={{ transitionDelay: "100ms" }}
+            >
+              The API Key Manager You Can{" "}
+              <span className="text-gradient">Actually Trust.</span>
+            </h1>
+            <p
+              className={`text-lg md:text-xl text-muted-foreground max-w-xl mb-8 leading-relaxed transition-all duration-700 ease-[cubic-bezier(.21,1.02,.73,1)] motion-reduce:!opacity-100 motion-reduce:!translate-y-0 motion-reduce:transition-none ${heroInView ? "opacity-100 translate-y-0" : "opacity-0 translate-y-6"}`}
+              style={{ transitionDelay: "200ms" }}
+            >
+              Stop pasting production secrets into Slack. Keyper encrypts your API keys in the browser using AES-GCM. Our servers never see your plaintext.
+            </p>
+            <div
+              className={`flex flex-col sm:flex-row items-start gap-4 mb-8 transition-all duration-700 ease-[cubic-bezier(.21,1.02,.73,1)] motion-reduce:!opacity-100 motion-reduce:!translate-y-0 motion-reduce:transition-none ${heroInView ? "opacity-100 translate-y-0" : "opacity-0 translate-y-6"}`}
+              style={{ transitionDelay: "300ms" }}
+            >
+              <Button size="lg" asChild className="bg-gradient-primary border-0 text-primary-foreground px-8 h-12 text-base w-full sm:w-auto hover:scale-[1.03] hover:shadow-[0_0_30px_-5px_hsl(187_80%_48%/0.4)] transition-all duration-300">
+                <Link to="/signup">Create Free Vault <ArrowRight className="ml-2 h-4 w-4" /></Link>
+              </Button>
+              <Button size="lg" variant="outline" asChild className="h-12 text-base w-full sm:w-auto border-border text-foreground hover:bg-secondary">
+                <Link to="/security">Read Security Whitepaper</Link>
+              </Button>
+            </div>
+            {/* Trust bullets */}
+            <div
+              className={`flex flex-col sm:flex-row sm:flex-wrap gap-x-6 gap-y-2 transition-all duration-700 ease-[cubic-bezier(.21,1.02,.73,1)] motion-reduce:!opacity-100 motion-reduce:!translate-y-0 motion-reduce:transition-none ${heroInView ? "opacity-100 translate-y-0" : "opacity-0 translate-y-6"}`}
+              style={{ transitionDelay: "400ms" }}
+            >
+              {["AES-GCM end-to-end encryption", "Developer CLI", "Scoped API tokens"].map((text) => (
+                <span key={text} className="inline-flex items-center gap-1.5 text-sm text-muted-foreground">
+                  <Check className="h-3.5 w-3.5 text-accent flex-shrink-0" />
+                  {text}
+                </span>
+              ))}
+            </div>
           </div>
-          <h1 className="text-5xl sm:text-6xl md:text-7xl font-extrabold tracking-tight mb-6 leading-[1.1] text-foreground animate-on-scroll" style={{ transitionDelay: "0.1s" }}>
-            The API Key Manager You Can{" "}
-            <span className="text-gradient">Actually Trust.</span>
-          </h1>
-          <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto mb-10 leading-relaxed animate-on-scroll" style={{ transitionDelay: "0.2s" }}>
-            Stop pasting production secrets into Slack. Keyper encrypts your API keys in the browser using AES-GCM. Our servers never see your plaintext.
-          </p>
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-4 animate-on-scroll" style={{ transitionDelay: "0.3s" }}>
-            <Button size="lg" asChild className="bg-gradient-primary border-0 text-primary-foreground px-8 h-12 text-base w-full sm:w-auto hover:scale-[1.03] hover:shadow-[0_0_30px_-5px_hsl(187_80%_48%/0.4)] transition-all duration-300">
-              <Link to="/signup">Create Free Vault <ArrowRight className="ml-2 h-4 w-4" /></Link>
-            </Button>
-            <Button size="lg" variant="outline" asChild className="h-12 text-base w-full sm:w-auto border-border text-foreground hover:bg-secondary">
-              <Link to="/security">Read Security Whitepaper</Link>
-            </Button>
+
+          {/* Right column — screenshot */}
+          <div className="w-full">
+            <HeroScreenshot visible={heroInView} />
           </div>
         </div>
       </section>
