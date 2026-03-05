@@ -61,6 +61,7 @@ const MetricCard = ({ target, suffix, label, icon: Icon, delay, displayFn }: {
 const Landing = () => {
   const scrollRef = useScrollAnimation();
   const { ref: encryptionRef, isInView: encryptionInView } = useInView<HTMLDivElement>();
+  const { ref: heroRef, isInView: heroInView } = useInView<HTMLElement>({ threshold: 0.1 });
   return (
     <div className="min-h-screen bg-background page-grid" ref={scrollRef}>
       <Navbar />
