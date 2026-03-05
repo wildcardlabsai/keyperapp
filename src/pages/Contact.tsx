@@ -34,6 +34,9 @@ const Contact = () => {
     if (error) {
       toast({ variant: "destructive", title: "Failed to send", description: "Please try again later." });
     } else {
+      supabase.functions.invoke("notify-support-ticket", {
+        body: { name: name.trim(), email: email.trim(), subject: "Contact Form Inquiry", message: message.trim() },
+      });
       toast({ title: "Message sent!", description: "We'll get back to you as soon as possible." });
       setName(""); setEmail(""); setMessage("");
     }
