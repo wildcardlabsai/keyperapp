@@ -66,6 +66,7 @@ const sidebarItems: { id: Tab; label: string; icon: typeof Key }[] = [
   { id: "overview", label: "Overview", icon: LayoutDashboard },
   { id: "keys", label: "API Keys", icon: Key },
   { id: "teams", label: "Teams", icon: Users },
+  { id: "devtools", label: "Developer Tools", icon: Code2 },
   { id: "support", label: "Support", icon: MessageSquare },
   { id: "settings", label: "Settings", icon: Settings },
   { id: "billing", label: "Billing", icon: CreditCard },
