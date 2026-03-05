@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import {
   Shield, Key, Settings, CreditCard, Activity, LogOut, Lock, Plus, Eye, EyeOff,
   Copy, Trash2, Search, Edit, Download, Upload, Clock, Check, LayoutDashboard,
-  AlertTriangle, Unlock, MessageSquare, Users
+  AlertTriangle, Unlock, MessageSquare, Users, Code2
 } from "lucide-react";
 import keyperIcon from "@/assets/keyper-icon.png";
 import keyperLogo from "@/assets/keyper-logo.png";
