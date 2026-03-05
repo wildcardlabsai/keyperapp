@@ -51,7 +51,7 @@ const HeroScreenshot = ({ visible }: { visible: boolean }) => {
         onMouseMove={handleMouseMove}
         onMouseEnter={handleMouseEnter}
         onMouseLeave={handleMouseLeave}
-        className={`relative rounded-2xl border border-white/10 bg-gradient-to-b from-white/5 to-transparent shadow-[0_20px_80px_rgba(0,0,0,0.6)] backdrop-blur-sm p-3 transition-all duration-700 ease-[cubic-bezier(.21,1.02,.73,1)] motion-reduce:!opacity-100 motion-reduce:!translate-y-0 motion-reduce:transition-none ${visible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-6"}`}
+        className={`relative overflow-hidden rounded-2xl border border-white/10 bg-gradient-to-b from-white/5 to-transparent shadow-[0_20px_80px_rgba(0,0,0,0.6)] backdrop-blur-sm p-3 transition-all duration-700 ease-[cubic-bezier(.21,1.02,.73,1)] hover:shadow-[0_25px_90px_rgba(0,0,0,0.75)] before:absolute before:inset-x-0 before:top-0 before:h-px before:bg-gradient-to-r before:from-transparent before:via-white/40 before:to-transparent before:opacity-40 before:z-10 after:absolute after:inset-0 after:pointer-events-none after:rounded-2xl after:bg-gradient-to-br after:from-white/10 after:via-transparent after:to-transparent after:opacity-30 after:z-10 motion-reduce:!opacity-100 motion-reduce:!translate-y-0 motion-reduce:transition-none ${visible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-6"}`}
         style={{
           transitionDelay: visible ? "420ms" : "0ms",
           transform: reducedMotion
