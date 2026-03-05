@@ -6,6 +6,7 @@ import {
   AlertTriangle, Unlock, MessageSquare, Users
 } from "lucide-react";
 import keyperIcon from "@/assets/keyper-icon.png";
+import keyperLogo from "@/assets/keyper-logo.png";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
