@@ -8,10 +8,24 @@ export type ChangelogEntry = {
 
 export const changelogEntries: ChangelogEntry[] = [
   {
+    version: "1.6.2",
+    date: "2026-03-05",
+    title: "Chrome Extension: Environment Generator",
+    description: "The Keyper Chrome extension now includes a dedicated Environment Generator panel. Select a project and environment, then generate, copy, or download .env files directly from your browser — no dashboard needed.",
+    tags: ["feature"],
+  },
+  {
+    version: "1.6.1",
+    date: "2026-03-05",
+    title: "CLI: Environment Commands",
+    description: "New CLI commands for managing environment variables: keyper env list, keyper env pull, keyper env print, and keyper env write. Pull .env files for any project and environment straight from your terminal.",
+    tags: ["feature"],
+  },
+  {
     version: "1.6.0",
     date: "2026-03-05",
     title: "Environment Generator (.env Generator)",
-    description: "Organize secrets into Projects, Environments, and Variables. Generate ready-to-use .env files, Docker Compose snippets, and GitHub Actions configs — all encrypted end-to-end. Available in the Web UI, CLI (keyper env pull/write), and Chrome extension.",
+    description: "Organize secrets into Projects, Environments, and Variables. Generate ready-to-use .env files, Docker Compose snippets, and GitHub Actions configs — all encrypted end-to-end.",
     tags: ["feature", "security"],
   },
   {
