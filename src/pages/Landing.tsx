@@ -322,6 +322,7 @@ const Landing = () => {
       </section>
 
       <Footer />
+      <MobileCTA />
     </div>
   );
 };
