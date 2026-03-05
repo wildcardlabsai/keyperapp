@@ -1,9 +1,10 @@
 import { Link } from "react-router-dom";
-import { Shield, Lock, EyeOff, ArrowRight, Key, Code, Tag, Download, Users, Database, ShieldCheck, Globe } from "lucide-react";
+import { Shield, Lock, EyeOff, ArrowRight, Key, Code, Tag, Download, Users, Database, ShieldCheck, Globe, Check } from "lucide-react";
 import Testimonials from "@/components/landing/Testimonials";
 import { Button } from "@/components/ui/button";
 import Navbar from "@/components/landing/Navbar";
 import Footer from "@/components/landing/Footer";
+import HeroScreenshot from "@/components/landing/HeroScreenshot";
 import { useScrollAnimation } from "@/hooks/useScrollAnimation";
 import { useInView } from "@/hooks/useInView";
 import { useEffect, useRef, useState } from "react";
