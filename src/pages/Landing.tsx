@@ -79,6 +79,9 @@ const Landing = () => {
 
       {/* Hero */}
       <section className="relative pt-32 pb-20 lg:pt-36 lg:pb-28 px-6 overflow-hidden">
+        <div className="absolute inset-0 overflow-hidden pointer-events-none -z-10">
+          <div className="grid-drift hero-gradient w-full" style={{ height: "calc(100% + 60px)" }} />
+        </div>
         <div className="absolute inset-0 section-glow-top" />
         <div className="relative mx-auto max-w-7xl grid grid-cols-1 lg:grid-cols-2 gap-10 lg:gap-14 items-center">
           {/* Left column */}
