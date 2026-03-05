@@ -352,10 +352,31 @@ const DeveloperToolsTab = ({ userId }: Props) => {
                   </div>
                   <div>
                     <div className="flex items-center gap-2 mb-1">
+                      <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-accent/20 text-accent">GET</span>
+                      <code className="text-xs font-mono">/projects</code>
+                    </div>
+                    <p className="text-xs text-muted-foreground ml-12">List all projects. Auth: Bearer kpr_token or JWT</p>
+                  </div>
+                  <div>
+                    <div className="flex items-center gap-2 mb-1">
+                      <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-accent/20 text-accent">GET</span>
+                      <code className="text-xs font-mono">/projects/:id/environments</code>
+                    </div>
+                    <p className="text-xs text-muted-foreground ml-12">List environments for a project</p>
+                  </div>
+                  <div>
+                    <div className="flex items-center gap-2 mb-1">
+                      <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-accent/20 text-accent">GET</span>
+                      <code className="text-xs font-mono">/projects/:id/environments/:envId/variables</code>
+                    </div>
+                    <p className="text-xs text-muted-foreground ml-12">List encrypted variables for an environment</p>
+                  </div>
+                  <div>
+                    <div className="flex items-center gap-2 mb-1">
                       <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-primary/20 text-primary">POST</span>
                       <code className="text-xs font-mono">/generate-token</code>
                     </div>
-                    <p className="text-xs text-muted-foreground ml-12">Create a new API token. Auth: Bearer JWT (Supabase session)</p>
+                    <p className="text-xs text-muted-foreground ml-12">Create a new API token. Auth: Bearer JWT (session)</p>
                   </div>
                 </div>
               </div>
