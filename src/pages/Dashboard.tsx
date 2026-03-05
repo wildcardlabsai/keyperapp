@@ -22,7 +22,7 @@ import SupportTab from "@/components/dashboard/SupportTab";
 import { useToast } from "@/hooks/use-toast";
 import { deriveKey, encrypt, decrypt } from "@/lib/crypto";
 
-type Tab = "overview" | "keys" | "teams" | "settings" | "billing" | "security" | "support";
+type Tab = "overview" | "keys" | "teams" | "devtools" | "settings" | "billing" | "security" | "support";
 type ActivityEntry = { action: string; time: string };
 
 const formatDate = (d: string) => {
