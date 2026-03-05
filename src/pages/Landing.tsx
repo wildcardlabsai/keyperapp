@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import Navbar from "@/components/landing/Navbar";
 import Footer from "@/components/landing/Footer";
 import { useScrollAnimation } from "@/hooks/useScrollAnimation";
+import { useInView } from "@/hooks/useInView";
 import { useEffect, useRef, useState } from "react";
 
 const useCountUp = (target: number, duration = 2000, startOnView = true) => {
