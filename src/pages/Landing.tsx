@@ -72,12 +72,6 @@ const Landing = () => {
         <div className="relative mx-auto max-w-7xl grid grid-cols-1 lg:grid-cols-2 gap-10 lg:gap-14 items-center">
           {/* Left column */}
           <div className="flex flex-col items-start">
-            <div
-              className={`inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-border bg-secondary/50 text-sm text-accent mb-8 transition-all duration-700 ease-[cubic-bezier(.21,1.02,.73,1)] motion-reduce:!opacity-100 motion-reduce:!translate-y-0 motion-reduce:transition-none ${heroInView ? "opacity-100 translate-y-0" : "opacity-0 translate-y-6"}`}
-            >
-              <span className="h-2 w-2 rounded-full bg-accent" />
-              Keyper v1.0 is now live
-            </div>
             <h1
               className={`text-4xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight mb-6 leading-[1.1] text-foreground transition-all duration-700 ease-[cubic-bezier(.21,1.02,.73,1)] motion-reduce:!opacity-100 motion-reduce:!translate-y-0 motion-reduce:transition-none ${heroInView ? "opacity-100 translate-y-0" : "opacity-0 translate-y-6"}`}
               style={{ transitionDelay: "100ms" }}
