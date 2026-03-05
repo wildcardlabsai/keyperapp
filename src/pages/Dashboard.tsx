@@ -66,7 +66,7 @@ const expiryBadge = (expiresAt: string | null | undefined) => {
 const sidebarItems: { id: Tab; label: string; icon: typeof Key }[] = [
   { id: "overview", label: "Overview", icon: LayoutDashboard },
   { id: "keys", label: "API Keys", icon: Key },
-  { id: "envgen", label: "Environments", icon: FileCode },
+  
   { id: "teams", label: "Teams", icon: Users },
   { id: "devtools", label: "Developer Tools", icon: Code2 },
   { id: "support", label: "Support", icon: MessageSquare },
