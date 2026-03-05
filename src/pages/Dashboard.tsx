@@ -24,7 +24,7 @@ import EnvironmentGeneratorTab from "@/components/dashboard/EnvironmentGenerator
 import { useToast } from "@/hooks/use-toast";
 import { deriveKey, encrypt, decrypt } from "@/lib/crypto";
 
-type Tab = "overview" | "keys" | "teams" | "devtools" | "envgen" | "settings" | "billing" | "security" | "support";
+type Tab = "overview" | "keys" | "teams" | "devtools" | "settings" | "billing" | "security" | "support";
 type ActivityEntry = { action: string; time: string };
 
 const formatDate = (d: string) => {
