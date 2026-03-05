@@ -215,6 +215,8 @@ export type Database = {
           updated_at: string
           user_id: string
           vault_created: boolean
+          vault_verify_ciphertext: string | null
+          vault_verify_iv: string | null
         }
         Insert: {
           auto_lock_minutes?: number
@@ -226,6 +228,8 @@ export type Database = {
           updated_at?: string
           user_id: string
           vault_created?: boolean
+          vault_verify_ciphertext?: string | null
+          vault_verify_iv?: string | null
         }
         Update: {
           auto_lock_minutes?: number
@@ -237,6 +241,8 @@ export type Database = {
           updated_at?: string
           user_id?: string
           vault_created?: boolean
+          vault_verify_ciphertext?: string | null
+          vault_verify_iv?: string | null
         }
         Relationships: []
       }
@@ -406,18 +412,24 @@ export type Database = {
           created_by: string
           id: string
           name: string
+          vault_verify_ciphertext: string | null
+          vault_verify_iv: string | null
         }
         Insert: {
           created_at?: string
           created_by: string
           id?: string
           name: string
+          vault_verify_ciphertext?: string | null
+          vault_verify_iv?: string | null
         }
         Update: {
           created_at?: string
           created_by?: string
           id?: string
           name?: string
+          vault_verify_ciphertext?: string | null
+          vault_verify_iv?: string | null
         }
         Relationships: []
       }
