@@ -300,7 +300,7 @@ const Landing = () => {
       <Suspense fallback={null}><PricingTeaser /></Suspense>
 
       {/* CTA */}
-      <section className="py-24 px-4 relative overflow-hidden content-auto">
+      <section className="py-24 px-4 relative overflow-hidden">
         <div className="absolute inset-0 section-glow-top" />
         <div className="relative mx-auto max-w-3xl text-center animate-on-scroll">
           <h2 className="text-3xl md:text-4xl font-bold mb-4 text-foreground">Ready to secure your secrets?</h2>
