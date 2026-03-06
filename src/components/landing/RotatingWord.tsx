@@ -53,7 +53,7 @@ const RotatingWord = () => {
           : { opacity: 1, transform: "translateY(0)", transition: "none" };
 
   return (
-    <span className="inline-block relative align-bottom" style={{ minHeight: "1.15em" }}>
+    <span className="inline-flex relative align-baseline whitespace-nowrap" style={{ minHeight: "1.15em" }}>
       <span className="text-gradient inline-block" style={style}>
         {WORDS[index]}
       </span>
