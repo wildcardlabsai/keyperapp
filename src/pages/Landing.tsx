@@ -143,7 +143,7 @@ const Landing = () => {
       </section>
 
       {/* Features */}
-      <section className="py-24 px-4 content-auto">
+      <section className="py-24 px-4">
         <div className="mx-auto max-w-6xl">
           <div className="grid lg:grid-cols-2 gap-6">
             {/* Military-Grade Encryption - Large card */}
