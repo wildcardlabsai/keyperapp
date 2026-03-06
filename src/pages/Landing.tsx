@@ -237,7 +237,7 @@ const Landing = () => {
       </section>
 
       {/* How it works */}
-      <section className="py-24 px-4 content-auto">
+      <section className="py-24 px-4">
         <div className="mx-auto max-w-4xl">
           <h2 className="text-3xl md:text-4xl font-bold text-center mb-16 text-foreground animate-on-scroll">How Keyper Works</h2>
           <div className="grid sm:grid-cols-[1fr_auto_1fr_auto_1fr] items-start text-center gap-y-10">
