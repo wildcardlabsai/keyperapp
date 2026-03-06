@@ -131,7 +131,7 @@ const Landing = () => {
       <Suspense fallback={null}><TrustedBy /></Suspense>
 
       {/* Metrics */}
-      <section className="py-16 px-4 border-y border-border/40 content-auto">
+      <section className="py-16 px-4 border-y border-border/40">
         <div className="mx-auto max-w-5xl" ref={metricsRef}>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
             <MetricCard target={600} suffix="+" label="Active Users" icon={Users} delay={0} trigger={metricsInView} />
