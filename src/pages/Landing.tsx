@@ -131,7 +131,7 @@ const Landing = () => {
       <Suspense fallback={null}><TrustedBy /></Suspense>
 
       {/* Metrics */}
-      <section className="py-16 px-4 border-y border-border/40 content-auto">
+      <section className="py-16 px-4 border-y border-border/40">
         <div className="mx-auto max-w-5xl" ref={metricsRef}>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
             <MetricCard target={600} suffix="+" label="Active Users" icon={Users} delay={0} trigger={metricsInView} />
@@ -143,7 +143,7 @@ const Landing = () => {
       </section>
 
       {/* Features */}
-      <section className="py-24 px-4 content-auto">
+      <section className="py-24 px-4">
         <div className="mx-auto max-w-6xl">
           <div className="grid lg:grid-cols-2 gap-6">
             {/* Military-Grade Encryption - Large card */}
@@ -237,7 +237,7 @@ const Landing = () => {
       </section>
 
       {/* How it works */}
-      <section className="py-24 px-4 content-auto">
+      <section className="py-24 px-4">
         <div className="mx-auto max-w-4xl">
           <h2 className="text-3xl md:text-4xl font-bold text-center mb-16 text-foreground animate-on-scroll">How Keyper Works</h2>
           <div className="grid sm:grid-cols-[1fr_auto_1fr_auto_1fr] items-start text-center gap-y-10">
@@ -300,7 +300,7 @@ const Landing = () => {
       <Suspense fallback={null}><PricingTeaser /></Suspense>
 
       {/* CTA */}
-      <section className="py-24 px-4 relative overflow-hidden content-auto">
+      <section className="py-24 px-4 relative overflow-hidden">
         <div className="absolute inset-0 section-glow-top" />
         <div className="relative mx-auto max-w-3xl text-center animate-on-scroll">
           <h2 className="text-3xl md:text-4xl font-bold mb-4 text-foreground">Ready to secure your secrets?</h2>
