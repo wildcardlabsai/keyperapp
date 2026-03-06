@@ -21,17 +21,8 @@ const Footer = () => (
         <Link to="/changelog" className="hover:text-foreground transition-colors">Changelog</Link>
         <Link to="/admin" className="hover:text-foreground transition-colors">Admin</Link>
       </div>
-      <div className="flex justify-center mb-6">
-        <a href="https://www.producthunt.com/posts/keyper" target="_blank" rel="noopener noreferrer" className="transition-opacity hover:opacity-80">
-          <img
-            src="https://api.producthunt.com/widgets/embed-image/v1/featured.svg?post_id=keyper&theme=dark"
-            alt="Keyper on Product Hunt"
-            width="250"
-            height="54"
-            loading="lazy"
-          />
-        </a>
-      </div>
+
+
       <div className="text-center text-sm text-muted-foreground space-y-1">
         <p>© {new Date().getFullYear()} Keyper. All rights reserved.</p>
         <p>Developed by Wildcard Labs</p>
