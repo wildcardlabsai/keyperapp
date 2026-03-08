@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
-import { Shield, ArrowLeft, Check } from "lucide-react";
+import { ArrowLeft, Check } from "lucide-react";
+import keyperLogo from "@/assets/keyper-logo.png";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
@@ -57,10 +58,7 @@ const ForgotPassword = () => {
       <div className="relative w-full max-w-sm">
         <div className="text-center mb-8">
           <Link to="/" className="inline-flex items-center gap-2 mb-6">
-            <div className="h-9 w-9 rounded-lg bg-gradient-primary flex items-center justify-center">
-              <Shield className="h-5 w-5 text-primary-foreground" />
-            </div>
-            <span className="text-2xl font-bold">Keyper</span>
+            <img src={keyperLogo} alt="Keyper" className="h-9" />
           </Link>
           <h1 className="text-2xl font-bold">Reset your password</h1>
           <p className="text-sm text-muted-foreground mt-1">Enter your email and we'll send you a reset link</p>
