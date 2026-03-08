@@ -107,6 +107,7 @@ const Signup = () => {
                 {showPw ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
               </button>
             </div>
+            <PasswordStrength password={password} />
           </div>
           <div>
             <label className="text-sm font-medium mb-1.5 block">Confirm Password</label>

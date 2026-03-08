@@ -559,13 +559,7 @@ const Dashboard = () => {
       </aside>
 
       {/* Mobile nav */}
-      <div className="md:hidden fixed bottom-0 left-0 right-0 z-40 border-t border-border/50 bg-background/95 backdrop-blur flex">
-        {sidebarItems.map((item) => (
-          <button key={item.id} onClick={() => setTab(item.id)} className={`flex-1 flex flex-col items-center gap-1 py-3 text-xs ${tab === item.id ? "text-primary" : "text-muted-foreground"}`}>
-            <item.icon className="h-4 w-4" />{item.label}
-          </button>
-        ))}
-      </div>
+      <MobileBottomNav tab={tab} setTab={setTab} />
 
       {/* Content */}
       <main className="flex-1 p-6 md:p-8 pb-24 md:pb-8 overflow-auto">
