@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
-import { Shield, ArrowLeft, Check } from "lucide-react";
+import { ArrowLeft, Check } from "lucide-react";
+import keyperLogo from "@/assets/keyper-logo.png";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
