@@ -1,6 +1,8 @@
 import { Lock, Key, EyeOff, Shield } from "lucide-react";
 import Navbar from "@/components/landing/Navbar";
 import Footer from "@/components/landing/Footer";
+import PageCTA from "@/components/landing/PageCTA";
+import { useScrollAnimation } from "@/hooks/useScrollAnimation";
 
 const sections = [
   {
@@ -25,36 +27,41 @@ const sections = [
   },
 ];
 
-const SecurityPage = () => (
-  <div className="min-h-screen bg-background">
-    <Navbar />
-    <div className="pt-28 pb-20 px-4">
-      <div className="mx-auto max-w-3xl">
-        <div className="text-center mb-16">
-          <h1 className="text-4xl md:text-5xl font-bold mb-4">Security Architecture</h1>
-          <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-            How we protect your most sensitive data with true zero-knowledge encryption.
-          </p>
-        </div>
+const SecurityPage = () => {
+  const scrollRef = useScrollAnimation();
 
-        <div className="relative">
-          <div className="absolute left-5 top-0 bottom-0 w-px bg-border" />
-          <div className="space-y-12">
-            {sections.map((s, i) => (
-              <div key={i} className="relative pl-14">
-                <div className="absolute left-0 h-10 w-10 rounded-lg bg-accent/10 flex items-center justify-center">
-                  <s.icon className="h-5 w-5 text-accent" />
+  return (
+    <div className="min-h-screen bg-background" ref={scrollRef}>
+      <Navbar />
+      <div className="pt-28 pb-20 px-4">
+        <div className="mx-auto max-w-3xl">
+          <div className="text-center mb-16 animate-on-scroll">
+            <h1 className="text-4xl md:text-5xl font-bold mb-4">Security Architecture</h1>
+            <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+              How we protect your most sensitive data with true zero-knowledge encryption.
+            </p>
+          </div>
+
+          <div className="relative">
+            <div className="absolute left-5 top-0 bottom-0 w-px bg-border" />
+            <div className="space-y-12">
+              {sections.map((s, i) => (
+                <div key={i} className="relative pl-14 animate-on-scroll" style={{ transitionDelay: `${i * 0.1}s` }}>
+                  <div className="absolute left-0 h-10 w-10 rounded-lg bg-accent/10 flex items-center justify-center">
+                    <s.icon className="h-5 w-5 text-accent" />
+                  </div>
+                  <h3 className="font-bold text-xl mb-2">{s.title}</h3>
+                  <p className="text-muted-foreground leading-relaxed">{s.text}</p>
                 </div>
-                <h3 className="font-bold text-xl mb-2">{s.title}</h3>
-                <p className="text-muted-foreground leading-relaxed">{s.text}</p>
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
         </div>
       </div>
+      <PageCTA heading="Trust the architecture" description="Your secrets deserve military-grade protection. Start encrypting for free." />
+      <Footer />
     </div>
-    <Footer />
-  </div>
-);
+  );
+};
 
 export default SecurityPage;

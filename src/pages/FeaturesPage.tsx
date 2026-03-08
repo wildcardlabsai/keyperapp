@@ -1,6 +1,8 @@
 import { Lock, Shield, Eye, Copy, Download, Users, Key, Fingerprint, Clock, Tags, FileText, Search } from "lucide-react";
 import Navbar from "@/components/landing/Navbar";
 import Footer from "@/components/landing/Footer";
+import PageCTA from "@/components/landing/PageCTA";
+import { useScrollAnimation } from "@/hooks/useScrollAnimation";
 import featureApiKeys from "@/assets/feature-apikeys.png";
 import featureDevTools from "@/assets/feature-devtools.png";
 import featureVaultLock from "@/assets/feature-vaultlock.png";
@@ -48,58 +50,67 @@ const showcases = [
   },
 ];
 
-const FeaturesPage = () => (
-  <div className="min-h-screen">
-    <Navbar />
-    <div className="pt-28 pb-20 px-4">
-      <div className="mx-auto max-w-6xl">
-        <div className="text-center mb-16">
-          <h1 className="text-4xl md:text-5xl font-bold mb-4">Features</h1>
-          <p className="text-lg text-muted-foreground max-w-2xl mx-auto">Everything you need to securely store, manage, and access your API keys.</p>
-        </div>
+const FeaturesPage = () => {
+  const scrollRef = useScrollAnimation();
 
-        {/* Feature Grid */}
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-5 mb-24">
-          {features.map((f, i) => (
-            <div key={i} className="rounded-xl border border-border/50 bg-card/40 p-6 hover:border-primary/30 hover:bg-card/60 transition-all duration-300">
-              <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center mb-4">
-                <f.icon className="h-5 w-5 text-primary" />
-              </div>
-              <h3 className="font-semibold mb-2">{f.title}</h3>
-              <p className="text-sm text-muted-foreground leading-relaxed">{f.desc}</p>
-            </div>
-          ))}
-        </div>
+  return (
+    <div className="min-h-screen" ref={scrollRef}>
+      <Navbar />
+      <div className="pt-28 pb-20 px-4">
+        <div className="mx-auto max-w-6xl">
+          <div className="text-center mb-16 animate-on-scroll">
+            <h1 className="text-4xl md:text-5xl font-bold mb-4">Features</h1>
+            <p className="text-lg text-muted-foreground max-w-2xl mx-auto">Everything you need to securely store, manage, and access your API keys.</p>
+          </div>
 
-        {/* Visual Showcases */}
-        <div className="space-y-20">
-          <h2 className="text-3xl md:text-4xl font-bold text-center mb-12">See It in Action</h2>
-          {showcases.map((s, i) => (
-            <div
-              key={i}
-              className={`flex flex-col ${i % 2 === 1 ? "lg:flex-row-reverse" : "lg:flex-row"} gap-10 lg:gap-14 items-center`}
-            >
-              <div className="flex-1 text-center lg:text-left">
-                <h3 className="text-2xl font-bold mb-3 text-foreground">{s.title}</h3>
-                <p className="text-muted-foreground leading-relaxed max-w-md mx-auto lg:mx-0">{s.desc}</p>
+          {/* Feature Grid */}
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-5 mb-24">
+            {features.map((f, i) => (
+              <div
+                key={i}
+                className="rounded-xl border border-border/50 bg-card/40 p-6 hover:border-primary/30 hover:bg-card/60 hover:-translate-y-1 transition-all duration-300 animate-on-scroll"
+                style={{ transitionDelay: `${(i % 3) * 0.05}s` }}
+              >
+                <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center mb-4">
+                  <f.icon className="h-5 w-5 text-primary" />
+                </div>
+                <h3 className="font-semibold mb-2">{f.title}</h3>
+                <p className="text-sm text-muted-foreground leading-relaxed">{f.desc}</p>
               </div>
-              <div className="flex-1 w-full">
-                <div className="rounded-2xl border border-border/30 bg-card/20 p-2 shadow-[0_10px_50px_rgba(0,0,0,0.4)]">
-                  <img
-                    src={s.image}
-                    alt={s.alt}
-                    className="w-full h-auto rounded-xl object-cover"
-                    loading="lazy"
-                  />
+            ))}
+          </div>
+
+          {/* Visual Showcases */}
+          <div className="space-y-20">
+            <h2 className="text-3xl md:text-4xl font-bold text-center mb-12 animate-on-scroll">See It in Action</h2>
+            {showcases.map((s, i) => (
+              <div
+                key={i}
+                className={`flex flex-col ${i % 2 === 1 ? "lg:flex-row-reverse" : "lg:flex-row"} gap-10 lg:gap-14 items-center animate-on-scroll`}
+              >
+                <div className="flex-1 text-center lg:text-left">
+                  <h3 className="text-2xl font-bold mb-3 text-foreground">{s.title}</h3>
+                  <p className="text-muted-foreground leading-relaxed max-w-md mx-auto lg:mx-0">{s.desc}</p>
+                </div>
+                <div className="flex-1 w-full">
+                  <div className="rounded-2xl border border-border/30 bg-card/20 p-2 shadow-[0_10px_50px_rgba(0,0,0,0.4)]">
+                    <img
+                      src={s.image}
+                      alt={s.alt}
+                      className="w-full h-auto rounded-xl object-cover"
+                      loading="lazy"
+                    />
+                  </div>
                 </div>
               </div>
-            </div>
-          ))}
+            ))}
+          </div>
         </div>
       </div>
+      <PageCTA heading="See something you like?" description="Start using all these features for free. Create your vault in under a minute." />
+      <Footer />
     </div>
-    <Footer />
-  </div>
-);
+  );
+};
 
 export default FeaturesPage;

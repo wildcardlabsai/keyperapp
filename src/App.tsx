@@ -16,7 +16,7 @@ import PricingPage from "./pages/PricingPage";
 import FAQ from "./pages/FAQ";
 import Privacy from "./pages/Privacy";
 import Terms from "./pages/Terms";
-import Contact from "./pages/Contact";
+
 import Support from "./pages/Support";
 import Login from "./pages/Login";
 import Signup from "./pages/Signup";

@@ -1,6 +1,7 @@
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import Navbar from "@/components/landing/Navbar";
 import Footer from "@/components/landing/Footer";
+import PageCTA from "@/components/landing/PageCTA";
 
 const faqs = [
   { q: "How does Keyper encrypt my API keys?", a: "Keyper uses AES-256-GCM encryption, which happens entirely in your browser. Your vault passphrase is used to derive an encryption key via PBKDF2. The encrypted data is then stored securely — we never see or store your plaintext keys." },
@@ -33,6 +34,7 @@ const FAQ = () => (
         </Accordion>
       </div>
     </div>
+    <PageCTA heading="Still have questions?" description="Our team is here to help. Or just dive in — it's free to get started." />
     <Footer />
   </div>
 );
