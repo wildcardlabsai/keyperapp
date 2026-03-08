@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import {
   Shield, Key, Settings, CreditCard, Activity, LogOut, Lock, Plus, Eye, EyeOff,
   Copy, Trash2, Search, Edit, Download, Upload, Clock, Check, LayoutDashboard,
-  AlertTriangle, Unlock, MessageSquare, Users, Code2
+  AlertTriangle, Unlock, MessageSquare, Users, Code2, MoreHorizontal
 } from "lucide-react";
 import keyperIcon from "@/assets/keyper-icon.png";
 import keyperLogo from "@/assets/keyper-logo.png";
@@ -74,6 +74,37 @@ const sidebarItems: { id: Tab; label: string; icon: typeof Key }[] = [
   { id: "billing", label: "Billing", icon: CreditCard },
   { id: "security", label: "Security", icon: Activity },
 ];
+
+const primaryMobileItems: Tab[] = ["overview", "keys", "teams", "settings"];
+
+const MobileBottomNav = ({ tab, setTab }: { tab: Tab; setTab: (t: Tab) => void }) => {
+  const [showMore, setShowMore] = useState(false);
+  const moreItems = sidebarItems.filter((s) => !primaryMobileItems.includes(s.id));
+
+  return (
+    <>
+      {showMore && (
+        <div className="md:hidden fixed bottom-16 left-0 right-0 z-40 border-t border-border/50 bg-background/95 backdrop-blur px-2 py-2 grid grid-cols-4 gap-1">
+          {moreItems.map((item) => (
+            <button key={item.id} onClick={() => { setTab(item.id); setShowMore(false); }} className={`flex flex-col items-center gap-1 py-2.5 rounded-lg text-xs ${tab === item.id ? "text-primary bg-primary/10" : "text-muted-foreground"}`}>
+              <item.icon className="h-4 w-4" />{item.label}
+            </button>
+          ))}
+        </div>
+      )}
+      <div className="md:hidden fixed bottom-0 left-0 right-0 z-40 border-t border-border/50 bg-background/95 backdrop-blur flex">
+        {sidebarItems.filter((s) => primaryMobileItems.includes(s.id)).map((item) => (
+          <button key={item.id} onClick={() => { setTab(item.id); setShowMore(false); }} className={`flex-1 flex flex-col items-center gap-1 py-3 text-xs ${tab === item.id ? "text-primary" : "text-muted-foreground"}`}>
+            <item.icon className="h-4 w-4" />{item.label}
+          </button>
+        ))}
+        <button onClick={() => setShowMore(!showMore)} className={`flex-1 flex flex-col items-center gap-1 py-3 text-xs ${moreItems.some(m => m.id === tab) ? "text-primary" : "text-muted-foreground"}`}>
+          <MoreHorizontal className="h-4 w-4" />More
+        </button>
+      </div>
+    </>
+  );
+};
 
 const Dashboard = () => {
   const [tab, setTab] = useState<Tab>("overview");
@@ -559,13 +590,7 @@ const Dashboard = () => {
       </aside>
 
       {/* Mobile nav */}
-      <div className="md:hidden fixed bottom-0 left-0 right-0 z-40 border-t border-border/50 bg-background/95 backdrop-blur flex">
-        {sidebarItems.map((item) => (
-          <button key={item.id} onClick={() => setTab(item.id)} className={`flex-1 flex flex-col items-center gap-1 py-3 text-xs ${tab === item.id ? "text-primary" : "text-muted-foreground"}`}>
-            <item.icon className="h-4 w-4" />{item.label}
-          </button>
-        ))}
-      </div>
+      <MobileBottomNav tab={tab} setTab={setTab} />
 
       {/* Content */}
       <main className="flex-1 p-6 md:p-8 pb-24 md:pb-8 overflow-auto">
@@ -614,8 +639,7 @@ const Dashboard = () => {
                 {[
                   { done: true, text: "Create vault" },
                   { done: keys.length > 0, text: "Add first API key" },
-                  { done: true, text: "Learn how keys are protected" },
-                  { done: false, text: "Export encrypted backup" },
+                  { done: activityLog.some(e => e.action.toLowerCase().includes("backup exported")), text: "Export encrypted backup" },
                 ].map((item, i) => (
                   <div key={i} className={`flex items-center gap-3 p-3 rounded-lg ${item.done ? "bg-accent/5" : "bg-muted/30"}`}>
                     <div className={`h-6 w-6 rounded-full flex items-center justify-center shrink-0 ${item.done ? "bg-accent/20" : "border border-border"}`}>

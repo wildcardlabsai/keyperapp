@@ -5,6 +5,8 @@ import { Button } from "@/components/ui/button";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import Navbar from "@/components/landing/Navbar";
 import Footer from "@/components/landing/Footer";
+import PageCTA from "@/components/landing/PageCTA";
+import { useScrollAnimation } from "@/hooks/useScrollAnimation";
 
 const pricingFaqs = [
   { q: "Can I switch between plans at any time?", a: "Yes. You can upgrade or downgrade your plan at any time. Changes take effect immediately and billing is prorated." },
@@ -19,13 +21,14 @@ const PricingPage = () => {
   const monthlyPrice = 4.99;
   const annualPrice = 3.99;
   const price = annual ? annualPrice : monthlyPrice;
+  const scrollRef = useScrollAnimation();
 
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen page-grid" ref={scrollRef}>
       <Navbar />
       <div className="pt-28 pb-20 px-4">
         <div className="mx-auto max-w-4xl">
-          <div className="text-center mb-10">
+          <div className="text-center mb-10 animate-on-scroll">
             <h1 className="text-4xl md:text-5xl font-bold mb-4">Pricing</h1>
             <p className="text-lg text-muted-foreground mb-6">Simple plans. No hidden fees. Start for free.</p>
 
@@ -46,7 +49,7 @@ const PricingPage = () => {
             </div>
           </div>
 
-          <div className="grid sm:grid-cols-2 gap-6 max-w-2xl mx-auto">
+          <div className="grid sm:grid-cols-2 gap-6 max-w-2xl mx-auto animate-on-scroll">
             <div className="rounded-xl border border-border/50 bg-card/40 p-8">
               <h3 className="font-semibold text-lg mb-1">Free</h3>
               <p className="text-4xl font-bold mb-1">£0<span className="text-base font-normal text-muted-foreground">/month</span></p>
@@ -81,12 +84,12 @@ const PricingPage = () => {
             </div>
           </div>
 
-          <p className="text-center text-sm text-muted-foreground mt-10">
+          <p className="text-center text-sm text-muted-foreground mt-10 animate-on-scroll">
             Billing is currently in early access. You can upgrade to Pro during the demo period.
           </p>
 
           {/* Comparison */}
-          <div className="mt-16 rounded-xl border border-border/50 bg-card/40 overflow-hidden">
+          <div className="mt-16 rounded-xl border border-border/50 bg-card/40 overflow-hidden animate-on-scroll">
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-border/40">
@@ -116,7 +119,7 @@ const PricingPage = () => {
           </div>
 
           {/* Pricing FAQ */}
-          <div className="mt-16">
+          <div className="mt-16 animate-on-scroll">
             <h2 className="text-2xl font-bold text-center mb-8">Pricing FAQ</h2>
             <Accordion type="single" collapsible className="max-w-2xl mx-auto">
               {pricingFaqs.map((f, i) => (
@@ -129,6 +132,7 @@ const PricingPage = () => {
           </div>
         </div>
       </div>
+      <PageCTA />
       <Footer />
     </div>
   );

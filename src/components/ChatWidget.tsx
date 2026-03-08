@@ -61,7 +61,7 @@ const ChatWidget = () => {
                 filtered.map((a) => (
                   <a
                     key={a.id}
-                    href="/support"
+                    href={`/support?article=${a.id}`}
                     className="block rounded-lg px-3 py-2.5 hover:bg-secondary/60 transition-colors"
                   >
                     <p className="text-sm font-medium text-foreground">{a.title}</p>

@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import { Search, ChevronRight, ArrowLeft, Send, BookOpen, MessageSquare, Phone } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -6,19 +7,26 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import Navbar from "@/components/landing/Navbar";
 import Footer from "@/components/landing/Footer";
+import PageCTA from "@/components/landing/PageCTA";
+import { useScrollAnimation } from "@/hooks/useScrollAnimation";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { kbArticles, kbCategories, type KBArticle } from "@/lib/knowledgeBase";
 
 const Support = () => {
+  const [searchParams] = useSearchParams();
+  const initialArticleId = searchParams.get("article");
+  const initialArticle = initialArticleId ? kbArticles.find(a => a.id === initialArticleId) || null : null;
+
   const [search, setSearch] = useState("");
-  const [selectedArticle, setSelectedArticle] = useState<KBArticle | null>(null);
+  const [selectedArticle, setSelectedArticle] = useState<KBArticle | null>(initialArticle);
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [subject, setSubject] = useState("");
   const [message, setMessage] = useState("");
   const [sending, setSending] = useState(false);
   const { toast } = useToast();
+  const scrollRef = useScrollAnimation();
 
   const filtered = search.trim()
     ? kbArticles.filter(
@@ -37,7 +45,6 @@ const Support = () => {
     }
     setSending(true);
 
-    // Try to get current user for user_id
     const { data: { session } } = await supabase.auth.getSession();
 
     const { error } = await supabase.from("support_tickets").insert({
@@ -52,7 +59,6 @@ const Support = () => {
     if (error) {
       toast({ variant: "destructive", title: "Failed to send", description: "Please try again later." });
     } else {
-      // Send email notification
       supabase.functions.invoke("notify-support-ticket", {
         body: { name: name.trim(), email: email.trim(), subject: subject.trim(), message: message.trim() },
       });
@@ -62,17 +68,17 @@ const Support = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background page-grid" ref={scrollRef}>
       <Navbar />
       <main className="pt-24 pb-16 px-4">
         <div className="mx-auto max-w-4xl">
-          <div className="text-center mb-12">
+          <div className="text-center mb-12 animate-on-scroll">
             <h1 className="text-3xl md:text-4xl font-bold mb-3">Support & Knowledge Base</h1>
             <p className="text-muted-foreground max-w-lg mx-auto">Find answers to common questions or get in touch with our team.</p>
           </div>
 
           {/* Knowledge Base */}
-          <section className="mb-16">
+          <section className="mb-16 animate-on-scroll">
             <div className="flex items-center gap-2 mb-6">
               <BookOpen className="h-5 w-5 text-primary" />
               <h2 className="text-xl font-semibold">Knowledge Base</h2>
@@ -134,7 +140,7 @@ const Support = () => {
           </section>
 
           {/* Contact Form */}
-          <section>
+          <section className="animate-on-scroll">
             <div className="flex items-center gap-2 mb-6">
               <MessageSquare className="h-5 w-5 text-primary" />
               <h2 className="text-xl font-semibold">Contact Us</h2>
@@ -174,6 +180,7 @@ const Support = () => {
           </section>
         </div>
       </main>
+      <PageCTA heading="Need more help?" description="Our team is here to help you get the most out of Keyper." />
       <Footer />
     </div>
   );

@@ -23,6 +23,7 @@ type UserRow = {
 
 const Admin = () => {
   const [tab, setTab] = useState<Tab>("users");
+  const [showEmailPreview, setShowEmailPreview] = useState(false);
   const [users, setUsers] = useState<UserRow[]>([]);
   const [announcement, setAnnouncement] = useState("");
   const [loading, setLoading] = useState(true);
@@ -262,7 +263,21 @@ const Admin = () => {
         </Link>
       </aside>
 
-      <main className="flex-1 p-6 md:p-8 overflow-auto">
+      {/* Mobile nav */}
+      <div className="md:hidden fixed bottom-0 left-0 right-0 z-40 border-t border-border/50 bg-background/95 backdrop-blur flex">
+        {([
+          { id: "users" as Tab, label: "Users", icon: Users },
+          { id: "support" as Tab, label: "Support", icon: MessageSquare },
+          { id: "metrics" as Tab, label: "Metrics", icon: BarChart3 },
+          { id: "email" as Tab, label: "Email", icon: Mail },
+        ]).map((item) => (
+          <button key={item.id} onClick={() => setTab(item.id)} className={`flex-1 flex flex-col items-center gap-1 py-3 text-xs ${tab === item.id ? "text-primary" : "text-muted-foreground"}`}>
+            <item.icon className="h-4 w-4" />{item.label}
+          </button>
+        ))}
+      </div>
+
+      <main className="flex-1 p-6 md:p-8 pb-24 md:pb-8 overflow-auto">
         {tab === "users" && (
           <div>
             <div className="flex items-center justify-between mb-6">
@@ -328,8 +343,27 @@ const Admin = () => {
                   <Send className="mr-2 h-4 w-4" />
                   {sendingMass ? "Sending..." : `Send to ${users.length} users`}
                 </Button>
+                <Button variant="outline" size="sm" onClick={() => setShowEmailPreview(!showEmailPreview)}>
+                  {showEmailPreview ? "Hide preview" : "Preview"}
+                </Button>
                 <p className="text-xs text-muted-foreground">Emails are sent with Keyper branding.</p>
               </div>
+              {showEmailPreview && massBody.trim() && (
+                <div className="mt-4 rounded-xl border border-border/50 bg-background p-6 max-w-lg">
+                  <div className="text-center mb-4 pb-4 border-b border-border/40">
+                    <p className="text-lg font-bold text-primary">Keyper</p>
+                  </div>
+                  <h2 className="text-lg font-semibold mb-3">{massSubject || "Subject line"}</h2>
+                  <div className="space-y-3 text-sm text-muted-foreground">
+                    {massBody.split("\n").filter(Boolean).map((line, i) => (
+                      <p key={i}>{line}</p>
+                    ))}
+                  </div>
+                  <div className="mt-6 pt-4 border-t border-border/40 text-center">
+                    <p className="text-xs text-muted-foreground">© {new Date().getFullYear()} Keyper. All rights reserved.</p>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         )}
