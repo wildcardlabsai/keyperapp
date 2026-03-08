@@ -23,6 +23,7 @@ type UserRow = {
 
 const Admin = () => {
   const [tab, setTab] = useState<Tab>("users");
+  const [showEmailPreview, setShowEmailPreview] = useState(false);
   const [users, setUsers] = useState<UserRow[]>([]);
   const [announcement, setAnnouncement] = useState("");
   const [loading, setLoading] = useState(true);
