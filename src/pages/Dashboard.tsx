@@ -75,6 +75,37 @@ const sidebarItems: { id: Tab; label: string; icon: typeof Key }[] = [
   { id: "security", label: "Security", icon: Activity },
 ];
 
+const primaryMobileItems: Tab[] = ["overview", "keys", "teams", "settings"];
+
+const MobileBottomNav = ({ tab, setTab }: { tab: Tab; setTab: (t: Tab) => void }) => {
+  const [showMore, setShowMore] = useState(false);
+  const moreItems = sidebarItems.filter((s) => !primaryMobileItems.includes(s.id));
+
+  return (
+    <>
+      {showMore && (
+        <div className="md:hidden fixed bottom-16 left-0 right-0 z-40 border-t border-border/50 bg-background/95 backdrop-blur px-2 py-2 grid grid-cols-4 gap-1">
+          {moreItems.map((item) => (
+            <button key={item.id} onClick={() => { setTab(item.id); setShowMore(false); }} className={`flex flex-col items-center gap-1 py-2.5 rounded-lg text-xs ${tab === item.id ? "text-primary bg-primary/10" : "text-muted-foreground"}`}>
+              <item.icon className="h-4 w-4" />{item.label}
+            </button>
+          ))}
+        </div>
+      )}
+      <div className="md:hidden fixed bottom-0 left-0 right-0 z-40 border-t border-border/50 bg-background/95 backdrop-blur flex">
+        {sidebarItems.filter((s) => primaryMobileItems.includes(s.id)).map((item) => (
+          <button key={item.id} onClick={() => { setTab(item.id); setShowMore(false); }} className={`flex-1 flex flex-col items-center gap-1 py-3 text-xs ${tab === item.id ? "text-primary" : "text-muted-foreground"}`}>
+            <item.icon className="h-4 w-4" />{item.label}
+          </button>
+        ))}
+        <button onClick={() => setShowMore(!showMore)} className={`flex-1 flex flex-col items-center gap-1 py-3 text-xs ${moreItems.some(m => m.id === tab) ? "text-primary" : "text-muted-foreground"}`}>
+          <MoreHorizontal className="h-4 w-4" />More
+        </button>
+      </div>
+    </>
+  );
+};
+
 const Dashboard = () => {
   const [tab, setTab] = useState<Tab>("overview");
   const [locked, setLocked] = useState(true);
