@@ -21,10 +21,9 @@ const Footer = () => (
         <Link to="/changelog" className="hover:text-foreground transition-colors">Changelog</Link>
       </div>
 
-
       <div className="text-center text-sm text-muted-foreground space-y-1">
         <p>© {new Date().getFullYear()} Keyper. All rights reserved.</p>
-        <p>Developed by Wildcard Labs</p>
+        <p>Developed by <a href="https://wildcardlabs.co.uk" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">Wildcard Labs</a></p>
         <p className="text-xs"><a href="https://twitter.com/CymruMatt" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">@CymruMatt</a></p>
       </div>
     </div>
