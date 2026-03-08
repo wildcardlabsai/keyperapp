@@ -639,8 +639,7 @@ const Dashboard = () => {
                 {[
                   { done: true, text: "Create vault" },
                   { done: keys.length > 0, text: "Add first API key" },
-                  { done: true, text: "Learn how keys are protected" },
-                  { done: false, text: "Export encrypted backup" },
+                  { done: activityLog.some(e => e.action.toLowerCase().includes("backup exported")), text: "Export encrypted backup" },
                 ].map((item, i) => (
                   <div key={i} className={`flex items-center gap-3 p-3 rounded-lg ${item.done ? "bg-accent/5" : "bg-muted/30"}`}>
                     <div className={`h-6 w-6 rounded-full flex items-center justify-center shrink-0 ${item.done ? "bg-accent/20" : "border border-border"}`}>
